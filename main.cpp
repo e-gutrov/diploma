@@ -6,13 +6,14 @@
 #include <rapidjson/prettywriter.h>
 
 #include <jsoncons/json.hpp>
+#include <jsoncons_ext/jsonschema/jsonschema.hpp>
 
 #include <iostream>
 
 typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator > ValueType;
 
 void rapidjsonParsingExample() {
-    const char* json = "{\"project\":\"rapidjson\",\"stars\":10}";
+    const char* json = R"({"project":"rapidjson","stars":10})";
     rapidjson::Document d;
     d.Parse(json);
 
@@ -31,23 +32,24 @@ void rapidjsonParsingExample() {
 
 
 void rapidjsonValidatorExample() {
-    const char* json = "{\"project\":\"rapidjson\",\"stars\":10}";
-    const char* schema = "{\n"
-                         "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n"
-                         "  \"type\": \"object\",\n"
-                         "  \"properties\": {\n"
-                         "    \"project\": {\n"
-                         "      \"type\": \"string\"\n"
-                         "    },\n"
-                         "    \"stars\": {\n"
-                         "      \"type\": \"integer\"\n"
-                         "    }\n"
-                         "  },\n"
-                         "  \"required\": [\n"
-                         "    \"project\",\n"
-                         "    \"stars\"\n"
-                         "  ]\n"
-                         "}";
+    const char* json = R"({"project":"rapidjson","stars":10})";
+    const char* schema = R"(
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "object",
+        "properties": {
+            "project": {
+                "type": "string"
+            },
+            "stars": {
+                "type": "integer"
+            }
+        },
+        "required": [
+         "project",
+         "stars"
+        ]
+   })";
 
     rapidjson::Document d;
     d.Parse(schema);
@@ -153,12 +155,56 @@ void jsonconsParsingExample() {
 }
 
 void jsonconsValidatorExample() {
+    jsoncons::json schema = jsoncons::json::parse(R"(
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "project": {
+                "type": "string"
+            },
+            "stars": {
+                "type": "integer"
+            }
+        },
+        "required": [
+         "project",
+         "stars"
+        ]
+   })");
 
+    // Data
+    jsoncons::json data = jsoncons::json::parse(R"({"project":"rapidjson","stars":10})");
+
+    try
+    {
+        // Throws schema_error if JSON Schema loading fails
+        auto sch = jsoncons::jsonschema::make_schema(schema);
+
+        std::size_t error_count = 0;
+        auto reporter = [&error_count](const jsoncons::jsonschema::validation_output& o)
+        {
+            ++error_count;
+            std::cout << o.instance_location() << ": " << o.message() << "\n";
+        };
+
+        jsoncons::jsonschema::json_validator<jsoncons::json> validator(sch);
+
+        // Will call reporter for each schema violation
+        validator.validate(data, reporter);
+
+        std::cout << "\nError count: " << error_count << "\n\n";
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << e.what() << '\n';
+    }
 }
 
 int main() {
     rapidjsonParsingExample();
     rapidjsonValidatorExample();
     jsonconsParsingExample();
+    jsonconsValidatorExample();
     return 0;
 }
