@@ -8,7 +8,24 @@
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ExecutionEngine/Orc/CompileUtils.h"
+#include "llvm/ExecutionEngine/Orc/Core.h"
+#include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
+#include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
+#include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
+#include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
+#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/Support/TargetSelect.h"
+#include <llvm/IR/IRBuilder.h>
+#include "llvm/ExecutionEngine/Orc/LLJIT.h"
+#include "llvm/ExecutionEngine/Orc/CompileUtils.h"
+
 #include <iostream>
+#include <llvm/Support/TargetSelect.h>
 
 typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator > ValueType;
 
@@ -201,10 +218,166 @@ void jsonconsValidatorExample() {
     }
 }
 
+extern "C" void sayHello() {
+    std::cout << "Hello LLVM!" << '\n';
+}
+
+namespace llvm {
+    namespace orc {
+        class KaleidoscopeJIT {
+        private:
+            std::unique_ptr<ExecutionSession> ES;
+
+            DataLayout DL;
+            MangleAndInterner Mangle;
+
+            RTDyldObjectLinkingLayer ObjectLayer;
+            IRCompileLayer CompileLayer;
+
+            JITDylib &MainJD;
+
+        public:
+            KaleidoscopeJIT(std::unique_ptr<ExecutionSession> ES,
+                            JITTargetMachineBuilder JTMB, DataLayout DL)
+                    : ES(std::move(ES)), DL(std::move(DL)), Mangle(*this->ES, this->DL),
+                      ObjectLayer(*this->ES,
+                                  []() { return std::make_unique<SectionMemoryManager>(); }),
+                      CompileLayer(*this->ES, ObjectLayer,
+                                   std::make_unique<ConcurrentIRCompiler>(std::move(JTMB))),
+                      MainJD(this->ES->createBareJITDylib("<main>")) {
+                // likely not needed
+                MainJD.addGenerator(
+                        cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(
+                                DL.getGlobalPrefix())));
+            }
+
+            ~KaleidoscopeJIT() {
+                if (auto Err = ES->endSession())
+                    ES->reportError(std::move(Err));
+            }
+
+            static Expected<std::unique_ptr<KaleidoscopeJIT>> Create() {
+                auto EPC = SelfExecutorProcessControl::Create();
+                if (!EPC)
+                    return EPC.takeError();
+
+                auto ES = std::make_unique<ExecutionSession>(std::move(*EPC));
+
+                JITTargetMachineBuilder JTMB(
+                        ES->getExecutorProcessControl().getTargetTriple());
+
+                auto DL = JTMB.getDefaultDataLayoutForTarget();
+                if (!DL)
+                    return DL.takeError();
+
+                return std::make_unique<KaleidoscopeJIT>(std::move(ES), std::move(JTMB),
+                                                         std::move(*DL));
+            }
+
+            const DataLayout &getDataLayout() const { return DL; }
+
+            JITDylib &getMainJITDylib() { return MainJD; }
+
+            Error addModule(ThreadSafeModule TSM, ResourceTrackerSP RT = nullptr) {
+                if (!RT)
+                    RT = MainJD.getDefaultResourceTracker();
+                return CompileLayer.add(RT, std::move(TSM));
+            }
+
+            Expected<JITEvaluatedSymbol> lookup(StringRef Name) {
+                return ES->lookup({&MainJD}, Mangle(Name.str()));
+            }
+        };
+}}
+
+llvm::orc::ThreadSafeModule createModule() {
+    auto context = std::make_unique<llvm::LLVMContext>();
+    llvm::IRBuilder<> builder(*context);
+    auto module = std::make_unique<llvm::Module>("my_module", *context);
+
+    llvm::FunctionType *sayHelloType = llvm::FunctionType::get(builder.getVoidTy(), false);
+    llvm::Function *sayHelloFunc = llvm::Function::Create(sayHelloType, llvm::Function::ExternalLinkage, "sayHello", module.get());
+
+    llvm::FunctionType *mainType = llvm::FunctionType::get(builder.getInt32Ty(), false);
+    llvm::Function *mainFunc = llvm::Function::Create(mainType, llvm::Function::ExternalLinkage, "main", module.get());
+
+    llvm::BasicBlock *entryBlock = llvm::BasicBlock::Create(*context, "entry", mainFunc);
+    builder.SetInsertPoint(entryBlock);
+    builder.CreateCall(sayHelloFunc);
+    builder.CreateRet(builder.getInt32(0));
+
+    std::string triple = LLVMGetDefaultTargetTriple();
+    module->setTargetTriple(triple);
+//    std::cout << "triple: " << triple << std::endl;
+
+
+    return llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
+}
+
+using namespace llvm;
+using namespace orc;
+
+void callHelloLLVMViaCustomJIT() {
+//    LLJITBuilder().create()
+    auto jitEx = KaleidoscopeJIT::Create();
+    if (!jitEx) {
+        std::cerr << "no jit" << toString(jitEx.takeError()) << std::endl;
+    }
+    auto jit = std::move(jitEx.get());
+    if (auto err = jit->addModule(createModule())) {
+        std::cout << toString(std::move(err)) << std::endl;
+    }
+    auto sym = jit->lookup("main");
+    if (!sym) {
+        std::cerr << "no sym" << toString(sym.takeError()) << std::endl;
+    }
+}
+
+void callHelloLLVMViaLLJIT() {
+    auto jitEx = LLJITBuilder().create();
+    if (!jitEx) {
+        std::cerr << "no jit" << toString(jitEx.takeError()) << std::endl;
+    }
+    auto jit = std::move(jitEx.get());
+
+    auto& ES = jit->getExecutionSession();
+    auto& DL = jit->getDataLayout();
+    auto& JD = jit->getMainJITDylib();
+    MangleAndInterner Mangle(ES, DL);
+
+    auto symbol = JITEvaluatedSymbol(pointerToJITTargetAddress(&sayHello), JITSymbolFlags::Callable);
+    auto pair = detail::DenseMapPair<SymbolStringPtr, JITEvaluatedSymbol>(Mangle("sayHello"), symbol);
+    auto symbolMap = SymbolMap{{pair}};
+
+    if (auto err = JD.define(absoluteSymbols(symbolMap))) {
+        std::cout << toString(std::move(err)) << std::endl;
+    }
+//    JD.addGenerator(cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
+
+    if (auto err = jit->addIRModule(createModule())) {
+        std::cout << toString(std::move(err)) << std::endl;
+    }
+    auto sym = jit->lookup("main");
+    if (!sym) {
+        std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
+    } else {
+        auto func = reinterpret_cast<void(*)()>(sym.get().getValue());
+        func();
+        func();
+        func();
+    }
+}
+
 int main() {
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetAsmParser();
+
     rapidjsonParsingExample();
     rapidjsonValidatorExample();
     jsonconsParsingExample();
     jsonconsValidatorExample();
+//    callHelloLLVMViaCustomJIT();
+    callHelloLLVMViaLLJIT();
     return 0;
 }
