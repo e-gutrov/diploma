@@ -8,7 +8,8 @@
 #include <jsoncons/json_cursor.hpp>
 
 void sayHello();
-bool validateInt(void* cursor);
-void callNext(void* cursor);
+bool validateInt(void* ptr);
+bool isDone(void* ptr);
+void callNext(void* ptr);
 
 #endif //COURSEWORK_VALIDATORS_H
