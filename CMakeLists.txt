@@ -3,7 +3,7 @@ project(coursework)
 
 set(CMAKE_CXX_STANDARD 20)
 include_directories(include)
-add_executable(coursework main.cpp)
+add_executable(coursework main.cpp validators.cpp validators.h)
 
 find_package(LLVM REQUIRED CONFIG)
 
