@@ -270,7 +270,7 @@ llvm::orc::ThreadSafeModule createIteratingModule() {
     auto module = std::make_unique<llvm::Module>("iterating_module", *context);
     auto functions = generateFunctionDeclarations(&builder, module.get());
 
-    auto mainType = llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false);
+    auto mainType = llvm::FunctionType::get(builder.getVoidTy(), {builder.getInt8PtrTy()}, false);
     auto mainFunc = llvm::Function::Create(mainType, llvm::Function::ExternalLinkage, "main", module.get());
 
     auto entry = llvm::BasicBlock::Create(*context, "entry", mainFunc);
@@ -281,14 +281,14 @@ llvm::orc::ThreadSafeModule createIteratingModule() {
     builder.SetInsertPoint(loop);
 
     auto call = builder.CreateCall(functions.at("isDone"), {mainFunc->arg_begin()});
-//    call->setTailCall(false);
-//    call->setCallingConv(llvm::CallingConv::C);
-    llvm::Value* result = call;
-    auto resultTr = builder.CreateTrunc(result, builder.getInt1Ty());
-    builder.CreateCondBr(resultTr, exit, loop);
+    llvm::Value* isDone = call;
+    auto callNext = builder.CreateCall(functions.at("callNext"), {mainFunc->arg_begin()});
+    builder.CreateCondBr(isDone, exit, loop);
 
     builder.SetInsertPoint(exit);
     builder.CreateRetVoid();
+
+    module->print(llvm::outs(), nullptr);
 
     return finalizeModule(std::move(module), std::move(context));
 }
@@ -312,6 +312,7 @@ std::unique_ptr<LLJIT> prepareJit() {
         {Mangle("sayHello"), JITEvaluatedSymbol(pointerToJITTargetAddress(&sayHello), JITSymbolFlags::Callable)},
         {Mangle("validateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&validateInt), JITSymbolFlags::Callable)},
         {Mangle("callNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&callNext), JITSymbolFlags::Callable)},
+        {Mangle("isDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&isDone), JITSymbolFlags::Callable)},
     }};
 
     if (auto err = JD.define(absoluteSymbols(symbolMap))) {
@@ -363,7 +364,7 @@ void iterateOverJsonViaLLJIT() {
         std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
     } else {
         auto func = reinterpret_cast<void(*)(void*)>(sym.get().getValue());
-        func(&jit);
+        func(&cursor);
     }
 }
 

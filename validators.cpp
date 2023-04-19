@@ -16,12 +16,13 @@ jsoncons::json_cursor* toJsonCursor(void* ptr) {
 }
 
 void debugPrint(const std::string& funcName, json_cursor* cursor) {
-    std::cerr << funcName << "" << cursor->current().event_type() << std::endl;
+    std::cerr << "debugPrint called, " << funcName << " " << cursor->current().event_type() << std::endl;
 }
 
 bool validateInt(void* ptr) {
     auto cursor = toJsonCursor(ptr);
     debugPrint("validateInt", cursor);
+    return true;
 }
 
 bool isDone(void* ptr) {
@@ -33,5 +34,6 @@ bool isDone(void* ptr) {
 void callNext(void* ptr) {
     auto cursor = toJsonCursor(ptr);
     debugPrint("callNext", cursor);
+    cursor->next();
 }
 

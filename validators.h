@@ -5,8 +5,6 @@
 #ifndef COURSEWORK_VALIDATORS_H
 #define COURSEWORK_VALIDATORS_H
 
-#include <jsoncons/json_cursor.hpp>
-
 void sayHello();
 bool validateInt(void* ptr);
 bool isDone(void* ptr);
