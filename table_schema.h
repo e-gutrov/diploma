@@ -6,11 +6,12 @@
 #define COURSEWORK_TABLE_SCHEMA_H
 
 #include <string>
-#include <unordered_map>
+#include <vector>
 #include <memory>
 
 enum class ValueType {
     Int,
+    String,
     Optional,
     List,
     Object,
@@ -21,9 +22,12 @@ using TypeBasePtr = std::shared_ptr<TypeBase>;
 
 struct StructField {
     std::string Name;
-    std::shared_ptr<TypeBase> Schema;
+    TypeBasePtr Schema;
+    bool Optional = false;
 };
 using StructFieldPtr = std::shared_ptr<StructField>;
+
+StructFieldPtr MakeStructField(std::string name, TypeBasePtr schema, bool optional = false);
 
 class TypeBase {
 public:

@@ -28,8 +28,6 @@
 #include <iostream>
 #include "validators.h"
 
-typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator > ValueType;
-
 void rapidjsonParsingExample() {
     const char* json = R"({"project":"rapidjson","stars":10})";
     rapidjson::Document d;

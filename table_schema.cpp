@@ -7,6 +7,14 @@
 #include "table_schema.h"
 #include "exceptions.h"
 
+StructFieldPtr MakeStructField(std::string name, TypeBasePtr schema, bool optional) {
+    auto result = std::make_shared<StructField>();
+    result->Name = name;
+    result->Schema = std::move(schema);
+    result->Optional = optional;
+    return result;
+}
+
 class SimpleType : public TypeBase {
 public:
     SimpleType(ValueType t): Type_(t) {}
@@ -63,6 +71,7 @@ public:
     const std::vector<StructFieldPtr>& Children() const override {
         return Children_;
     }
+
 private:
     ValueType Type_;
     std::vector<StructFieldPtr> Children_;

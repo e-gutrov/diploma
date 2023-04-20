@@ -3,7 +3,7 @@ project(coursework)
 
 set(CMAKE_CXX_STANDARD 20)
 include_directories(include)
-add_executable(coursework main.cpp validators.cpp validators.h table_schema.h table_schema.cpp exceptions.cpp exceptions.h)
+add_executable(coursework main.cpp validators.cpp validators.h table_schema.h table_schema.cpp exceptions.cpp exceptions.h test_validators.cpp)
 
 find_package(LLVM REQUIRED CONFIG)
 
@@ -30,3 +30,9 @@ llvm_map_components_to_libnames(llvm_libs
 
 # Link against LLVM libraries
 target_link_libraries(coursework ${llvm_libs})
+
+# For tests
+find_package(Catch2 3 REQUIRED)
+# These tests can use the Catch2-provided main
+add_executable(tests test_validators.cpp validators.cpp table_schema.cpp exceptions.cpp)
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
