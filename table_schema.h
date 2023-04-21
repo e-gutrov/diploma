@@ -23,7 +23,7 @@ using TypeBasePtr = std::shared_ptr<TypeBase>;
 struct StructField {
     std::string Name;
     TypeBasePtr Schema;
-    bool Optional = false;
+    bool Optional;
 };
 using StructFieldPtr = std::shared_ptr<StructField>;
 

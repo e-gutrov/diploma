@@ -78,7 +78,13 @@ private:
 };
 
 TypeBasePtr CreateSimple(ValueType t) {
-    return std::make_shared<SimpleType>(t);
+    switch (t) {
+        case ValueType::Int:
+        case ValueType::String:
+            return std::make_shared<SimpleType>(t);
+        default:
+            throw TypeError("Called CreateSimple() with non-simple ValueType");
+    }
 }
 
 TypeBasePtr CreateOptional(TypeBasePtr child) {
