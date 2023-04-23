@@ -220,21 +220,21 @@ void jsonconsValidatorExample() {
 std::unordered_map<std::string, llvm::Function*> generateFunctionDeclarations(llvm::IRBuilder<>* builder, llvm::Module* module) {
     auto voidTy = builder->getVoidTy();
     auto sayHelloType = llvm::FunctionType::get(voidTy, false);
-    auto sayHelloFunc = llvm::Function::Create(sayHelloType, llvm::Function::ExternalLinkage, "sayHello", module);
+    auto sayHelloFunc = llvm::Function::Create(sayHelloType, llvm::Function::ExternalLinkage, "SayHello", module);
 
     auto boolTy = builder->getInt1Ty();
     auto voidPtrTy = builder->getInt8PtrTy();
 
     auto isDoneType = llvm::FunctionType::get(boolTy, {voidPtrTy}, false);
-    auto isDoneFunc = llvm::Function::Create(isDoneType, llvm::Function::ExternalLinkage, "isDone", module);
+    auto isDoneFunc = llvm::Function::Create(isDoneType, llvm::Function::ExternalLinkage, "IsDone", module);
 
     auto callNextType = llvm::FunctionType::get(voidTy, {voidPtrTy}, false);
-    auto callNextFunc = llvm::Function::Create(callNextType, llvm::Function::ExternalLinkage, "callNext", module);
+    auto callNextFunc = llvm::Function::Create(callNextType, llvm::Function::ExternalLinkage, "CallNext", module);
 
     return {
-        {"sayHello", sayHelloFunc},
-        {"isDone", isDoneFunc},
-        {"callNext", callNextFunc},
+        {"SayHello", sayHelloFunc},
+        {"IsDone", isDoneFunc},
+        {"CallNext", callNextFunc},
     };
 }
 
@@ -256,7 +256,7 @@ llvm::orc::ThreadSafeModule createModule() {
 
     llvm::BasicBlock *entryBlock = llvm::BasicBlock::Create(*context, "test", mainFunc);
     builder.SetInsertPoint(entryBlock);
-    builder.CreateCall(functions.at("sayHello"));
+    builder.CreateCall(functions.at("SayHello"));
     builder.CreateRet(builder.getInt32(0));
 
     return finalizeModule(std::move(module), std::move(context));
@@ -278,9 +278,9 @@ llvm::orc::ThreadSafeModule createIteratingModule() {
     builder.CreateBr(loop);
     builder.SetInsertPoint(loop);
 
-    auto call = builder.CreateCall(functions.at("isDone"), {mainFunc->arg_begin()});
+    auto call = builder.CreateCall(functions.at("IsDone"), {mainFunc->arg_begin()});
     llvm::Value* isDone = call;
-    auto callNext = builder.CreateCall(functions.at("callNext"), {mainFunc->arg_begin()});
+    auto callNext = builder.CreateCall(functions.at("CallNext"), {mainFunc->arg_begin()});
     builder.CreateCondBr(isDone, exit, loop);
 
     builder.SetInsertPoint(exit);
@@ -307,10 +307,11 @@ std::unique_ptr<LLJIT> prepareJit() {
     MangleAndInterner Mangle(ES, DL);
 
     auto symbolMap = SymbolMap{{
-        {Mangle("sayHello"), JITEvaluatedSymbol(pointerToJITTargetAddress(&sayHello), JITSymbolFlags::Callable)},
-        {Mangle("validateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&validateInt), JITSymbolFlags::Callable)},
-        {Mangle("callNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&callNext), JITSymbolFlags::Callable)},
-        {Mangle("isDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&isDone), JITSymbolFlags::Callable)},
+        {Mangle("SayHello"), JITEvaluatedSymbol(pointerToJITTargetAddress(&SayHello), JITSymbolFlags::Callable)},
+        {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
+        {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
+        {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&CallNext), JITSymbolFlags::Callable)},
+        {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&IsDone), JITSymbolFlags::Callable)},
     }};
 
     if (auto err = JD.define(absoluteSymbols(symbolMap))) {
@@ -376,7 +377,7 @@ int main() {
 //    jsonconsParsingExample();
 //    jsonconsValidatorExample();
 //    callHelloLLVMViaCustomJIT();
-    callHelloLLVMViaLLJIT();
+//    callHelloLLVMViaLLJIT();
     iterateOverJsonViaLLJIT();
     return 0;
 }
