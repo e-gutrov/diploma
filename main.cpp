@@ -26,7 +26,9 @@
 #include <llvm/Support/TargetSelect.h>
 
 #include <iostream>
-#include "validators.h"
+#include "validators_jsoncons.h"
+#include "validators_llvm.h"
+#include "helpers.h"
 
 void rapidjsonParsingExample() {
     const char* json = R"({"project":"rapidjson","stars":10})";
@@ -217,155 +219,64 @@ void jsonconsValidatorExample() {
     }
 }
 
-std::unordered_map<std::string, llvm::Function*> generateFunctionDeclarations(llvm::IRBuilder<>* builder, llvm::Module* module) {
-    auto voidTy = builder->getVoidTy();
-    auto sayHelloType = llvm::FunctionType::get(voidTy, false);
-    auto sayHelloFunc = llvm::Function::Create(sayHelloType, llvm::Function::ExternalLinkage, "SayHello", module);
+//llvm::orc::ThreadSafeModule createIteratingModule() {
+//    auto context = std::make_unique<llvm::LLVMContext>();
+//    llvm::IRBuilder<> builder(*context);
+//    auto module = std::make_unique<llvm::Module>("iterating_module", *context);
+//    auto functions = GenerateFunctionDeclarations(&builder, module.get());
+//
+//    auto mainType = llvm::FunctionType::get(builder.getVoidTy(), {builder.getInt8PtrTy()}, false);
+//    auto mainFunc = llvm::Function::Create(mainType, llvm::Function::ExternalLinkage, "main", module.get());
+//
+//    auto entry = llvm::BasicBlock::Create(*context, "entry", mainFunc);
+//    builder.SetInsertPoint(entry);
+//    auto loop = llvm::BasicBlock::Create(*context, "loop", mainFunc);
+//    auto exit = llvm::BasicBlock::Create(*context, "exit", mainFunc);
+//    builder.CreateBr(loop);
+//    builder.SetInsertPoint(loop);
+//
+//    auto call = builder.CreateCall(functions.at("IsDone"), {mainFunc->arg_begin()});
+//    llvm::Value* isDone = call;
+//    auto callNext = builder.CreateCall(functions.at("CallNext"), {mainFunc->arg_begin()});
+//    builder.CreateCondBr(isDone, exit, loop);
+//
+//    builder.SetInsertPoint(exit);
+//    builder.CreateRetVoid();
+//
+//    module->print(llvm::outs(), nullptr);
+//
+//    return FinalizeModule(std::move(module), std::move(context));
+//}
 
-    auto boolTy = builder->getInt1Ty();
-    auto voidPtrTy = builder->getInt8PtrTy();
-
-    auto isDoneType = llvm::FunctionType::get(boolTy, {voidPtrTy}, false);
-    auto isDoneFunc = llvm::Function::Create(isDoneType, llvm::Function::ExternalLinkage, "IsDone", module);
-
-    auto callNextType = llvm::FunctionType::get(voidTy, {voidPtrTy}, false);
-    auto callNextFunc = llvm::Function::Create(callNextType, llvm::Function::ExternalLinkage, "CallNext", module);
-
-    return {
-        {"SayHello", sayHelloFunc},
-        {"IsDone", isDoneFunc},
-        {"CallNext", callNextFunc},
-    };
-}
-
-llvm::orc::ThreadSafeModule finalizeModule(std::unique_ptr<llvm::Module> module, std::unique_ptr<llvm::LLVMContext> context) {
-    std::string triple = LLVMGetDefaultTargetTriple();
-    module->setTargetTriple(triple);
-
-    return llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
-}
-
-llvm::orc::ThreadSafeModule createModule() {
-    auto context = std::make_unique<llvm::LLVMContext>();
-    llvm::IRBuilder<> builder(*context);
-    auto module = std::make_unique<llvm::Module>("my_module", *context);
-    auto functions = generateFunctionDeclarations(&builder, module.get());
-
-    auto mainType = llvm::FunctionType::get(builder.getInt32Ty(), false);
-    auto mainFunc = llvm::Function::Create(mainType, llvm::Function::ExternalLinkage, "main", module.get());
-
-    llvm::BasicBlock *entryBlock = llvm::BasicBlock::Create(*context, "test", mainFunc);
-    builder.SetInsertPoint(entryBlock);
-    builder.CreateCall(functions.at("SayHello"));
-    builder.CreateRet(builder.getInt32(0));
-
-    return finalizeModule(std::move(module), std::move(context));
-}
-
-llvm::orc::ThreadSafeModule createIteratingModule() {
-    auto context = std::make_unique<llvm::LLVMContext>();
-    llvm::IRBuilder<> builder(*context);
-    auto module = std::make_unique<llvm::Module>("iterating_module", *context);
-    auto functions = generateFunctionDeclarations(&builder, module.get());
-
-    auto mainType = llvm::FunctionType::get(builder.getVoidTy(), {builder.getInt8PtrTy()}, false);
-    auto mainFunc = llvm::Function::Create(mainType, llvm::Function::ExternalLinkage, "main", module.get());
-
-    auto entry = llvm::BasicBlock::Create(*context, "entry", mainFunc);
-    builder.SetInsertPoint(entry);
-    auto loop = llvm::BasicBlock::Create(*context, "loop", mainFunc);
-    auto exit = llvm::BasicBlock::Create(*context, "exit", mainFunc);
-    builder.CreateBr(loop);
-    builder.SetInsertPoint(loop);
-
-    auto call = builder.CreateCall(functions.at("IsDone"), {mainFunc->arg_begin()});
-    llvm::Value* isDone = call;
-    auto callNext = builder.CreateCall(functions.at("CallNext"), {mainFunc->arg_begin()});
-    builder.CreateCondBr(isDone, exit, loop);
-
-    builder.SetInsertPoint(exit);
-    builder.CreateRetVoid();
-
-    module->print(llvm::outs(), nullptr);
-
-    return finalizeModule(std::move(module), std::move(context));
-}
-
-using namespace llvm;
-using namespace orc;
-
-std::unique_ptr<LLJIT> prepareJit() {
-    auto jitEx = LLJITBuilder().create();
-    if (!jitEx) {
-        std::cerr << "no jit" << toString(jitEx.takeError()) << std::endl;
-    }
-    auto jit = std::move(jitEx.get());
-
-    auto& ES = jit->getExecutionSession();
-    auto& DL = jit->getDataLayout();
-    auto& JD = jit->getMainJITDylib();
-    MangleAndInterner Mangle(ES, DL);
-
-    auto symbolMap = SymbolMap{{
-        {Mangle("SayHello"), JITEvaluatedSymbol(pointerToJITTargetAddress(&SayHello), JITSymbolFlags::Callable)},
-        {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
-        {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
-        {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&CallNext), JITSymbolFlags::Callable)},
-        {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&IsDone), JITSymbolFlags::Callable)},
-    }};
-
-    if (auto err = JD.define(absoluteSymbols(symbolMap))) {
-        std::cout << toString(std::move(err)) << std::endl;
-    }
-//    JD.addGenerator(cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
-    return jit;
-}
-
-void callHelloLLVMViaLLJIT() {
-    auto jit = prepareJit();
-    if (auto err = jit->addIRModule(createModule())) {
-        std::cout << toString(std::move(err)) << std::endl;
-    }
-    auto sym = jit->lookup("main");
-    if (!sym) {
-        std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
-    } else {
-        auto func = reinterpret_cast<void(*)()>(sym.get().getValue());
-        func();
-        func();
-        func();
-    }
-}
-
-void iterateOverJsonViaLLJIT() {
-    std::string data = R"(
-    {
-       "application": "hiking",
-       "reputons": [
-       {
-           "rater": "HikingAsylum",
-           "assertion": "advanced",
-           "rated": "Marilyn C",
-           "rating": 0.90,
-           "confidence": 0.99
-         }
-       ]
-    }
-    )";
-    jsoncons::json_cursor cursor(data);
-
-    auto jit = prepareJit();
-    if (auto err = jit->addIRModule(createIteratingModule())) {
-        std::cout << toString(std::move(err)) << std::endl;
-    }
-    auto sym = jit->lookup("main");
-    if (!sym) {
-        std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
-    } else {
-        auto func = reinterpret_cast<void(*)(void*)>(sym.get().getValue());
-        func(&cursor);
-    }
-}
+//void iterateOverJsonViaLLJIT() {
+//    std::string data = R"(
+//    {
+//       "application": "hiking",
+//       "reputons": [
+//       {
+//           "rater": "HikingAsylum",
+//           "assertion": "advanced",
+//           "rated": "Marilyn C",
+//           "rating": 0.90,
+//           "confidence": 0.99
+//         }
+//       ]
+//    }
+//    )";
+//    jsoncons::json_cursor cursor(data);
+//
+//    auto jit = PrepareJit();
+//    if (auto err = jit->addIRModule(createIteratingModule())) {
+//        std::cout << toString(std::move(err)) << std::endl;
+//    }
+//    auto sym = jit->lookup("main");
+//    if (!sym) {
+//        std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
+//    } else {
+//        auto func = reinterpret_cast<void(*)(void*)>(sym.get().getValue());
+//        func(&cursor);
+//    }
+//}
 
 int main() {
     llvm::InitializeNativeTarget();
@@ -378,6 +289,6 @@ int main() {
 //    jsonconsValidatorExample();
 //    callHelloLLVMViaCustomJIT();
 //    callHelloLLVMViaLLJIT();
-    iterateOverJsonViaLLJIT();
+//    iterateOverJsonViaLLJIT();
     return 0;
 }
