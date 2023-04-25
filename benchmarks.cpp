@@ -13,6 +13,7 @@
 #include "helpers.h"
 #include "rapidjson/document.h"
 #include "rapidjson/schema.h"
+#include "jsoncons_cursor_validator.h"
 
 class Timer {
 public:
@@ -53,6 +54,19 @@ void benchJsonconsValidation(const std::vector<std::string>& data, const jsoncon
             res += validator.is_valid(jsonObj);
         }
         std::cout << "jsoncons, res = " << res << std::endl;
+    }
+}
+
+void benchJsonconsCursorValidation(const std::vector<std::string>& data, const TypeBasePtr& type, int iterations) {
+    auto validator = CreateCursorValidator(type);
+    for (const auto& json : data) {
+        Timer t("jsoncons cursor");
+        int res = 0;
+        for (int i = 0; i < iterations; ++i) {
+            jsoncons::json_cursor cursor(json);
+            res += validator->Validate(&cursor);
+        }
+        std::cout << "jsoncons cursor, res = " << res << std::endl;
     }
 }
 
@@ -105,13 +119,13 @@ int main() {
     llvm::InitializeNativeTargetAsmParser();
 
     std::vector<std::string> data{"[1, 2, 3, 4]"};
-    auto intListSchema = CreateList(CreateOptional(CreateSimple(ValueType::Int))); // TODO: remove optional
+    auto intListSchema = CreateList(CreateOptional(CreateOptional(CreateSimple(ValueType::Int)))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
     int iterations = 10'000'000;
 
-    benchJsonconsValidation(data, jsonIntListSchema, iterations);
-//    benchJsonconsCursorValidation();
-    benchRapidJsonValidation(data, jsonIntListSchema.to_string(), iterations);
+//    benchJsonconsValidation(data, jsonIntListSchema, iterations);
+    benchJsonconsCursorValidation(data, intListSchema, iterations);
+//    benchRapidJsonValidation(data, jsonIntListSchema.to_string(), iterations);
     benchLLVMValidation(data, intListSchema, iterations);
 
     return 0;
