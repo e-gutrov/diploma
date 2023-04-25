@@ -36,3 +36,6 @@ find_package(Catch2 3 REQUIRED)
 # These tests can use the Catch2-provided main
 add_executable(tests test_validators.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2 ${llvm_libs})
+
+add_executable(benchmark benchmarks.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp)
+target_link_libraries(benchmark ${llvm_libs})
