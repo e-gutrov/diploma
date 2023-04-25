@@ -11,6 +11,8 @@
 #include "validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
+#include "rapidjson/document.h"
+#include "rapidjson/schema.h"
 
 class Timer {
 public:
@@ -54,6 +56,27 @@ void benchJsonconsValidation(const std::vector<std::string>& data, const jsoncon
     }
 }
 
+void benchRapidJsonValidation(const std::vector<std::string>& data, const std::string& schemaStr, int iterations) {
+    rapidjson::Document d;
+    d.Parse(schemaStr.c_str());
+    rapidjson::SchemaDocument sd(d);
+    for (const auto& json : data) {
+        Timer t("RapidJSON");
+        int res = 0;
+        rapidjson::SchemaValidator validator(sd);
+        for (int i = 0; i < iterations; ++i) {
+            rapidjson::Reader reader;
+            rapidjson::MemoryStream is(json.c_str(), json.size());
+            if (!reader.Parse(is, validator) && reader.GetParseErrorCode() != rapidjson::kParseErrorTermination) {
+                throw std::exception();
+            }
+            res += validator.IsValid();
+            validator.Reset();
+        }
+        std::cout << "RapidJSON, res = " << res << std::endl;
+    }
+}
+
 void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr& type, int iterations) {
     auto jit = PrepareJit();
     if (auto err = jit->addIRModule(CreateTableSchemaValidator(type))) {
@@ -84,9 +107,10 @@ int main() {
     std::vector<std::string> data{"[1, 2, 3, 4]"};
     auto intListSchema = CreateList((CreateSimple(ValueType::Int))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 1'000'000;
+    int iterations = 10'000'000;
 
     benchJsonconsValidation(data, jsonIntListSchema, iterations);
+    benchRapidJsonValidation(data, jsonIntListSchema.to_string(), iterations);
     benchLLVMValidation(data, intListSchema, iterations);
 
     return 0;

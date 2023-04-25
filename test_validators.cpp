@@ -268,7 +268,7 @@ TEST_CASE("Test list of optional ints") {
     SECTION("Test rapidjson schema validation") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
-    
+
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
     }

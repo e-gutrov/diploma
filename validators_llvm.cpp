@@ -171,6 +171,6 @@ llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema
     auto result = builder.CreateAnd(validateResult, isDone);
     builder.CreateRet(result);
 
-    module->print(llvm::outs(), nullptr);
+//    module->print(llvm::outs(), nullptr);
     return FinalizeModule(std::move(module), std::move(context));
 }
