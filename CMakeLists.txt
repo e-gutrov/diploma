@@ -4,7 +4,19 @@ project(coursework)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-O2")
 include_directories(include)
-add_executable(coursework main.cpp validators_jsoncons.cpp validators_jsoncons.h table_schema.h table_schema.cpp exceptions.cpp exceptions.h validators_llvm.cpp validators_llvm.h helpers.cpp helpers.h)
+add_executable(coursework
+        main.cpp
+        validators_jsoncons.cpp
+        validators_jsoncons.h
+        table_schema.h
+        table_schema.cpp
+        exceptions.cpp
+        exceptions.h
+        validators_llvm.cpp
+        validators_llvm.h
+        helpers.cpp
+        helpers.h
+        jsoncons_cursor_validator.cpp)
 
 find_package(LLVM REQUIRED CONFIG)
 
@@ -35,8 +47,8 @@ target_link_libraries(coursework ${llvm_libs})
 # For tests
 find_package(Catch2 3 REQUIRED)
 # These tests can use the Catch2-provided main
-add_executable(tests test_validators.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp)
+add_executable(tests test_validators.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp jsoncons_cursor_validator.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2 ${llvm_libs})
 
-add_executable(benchmark benchmarks.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp)
+add_executable(benchmark benchmarks.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp jsoncons_cursor_validator.cpp)
 target_link_libraries(benchmark ${llvm_libs})

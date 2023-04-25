@@ -13,7 +13,7 @@
 #include "validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
-
+#include "jsoncons_cursor_validator.h"
 
 void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tests, const jsoncons::json& jsonSchema) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
@@ -21,6 +21,16 @@ void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tes
     for (const auto& [json, expected] : tests) {
         INFO("JSON is: " << json);
         auto validationResult = validator.is_valid(jsoncons::json::parse(json));
+        CHECK(validationResult == expected);
+    }
+}
+
+void testJsonconsCursorValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
+    auto validator = CreateCursorValidator(type);
+    for (const auto& [json, expected] : tests) {
+        INFO("JSON is: " << json);
+        jsoncons::json_cursor cursor(json);
+        auto validationResult = validator->Validate(&cursor);
         CHECK(validationResult == expected);
     }
 }
@@ -88,6 +98,10 @@ TEST_CASE("Test int") {
         testJsonconsValidation(tests, jsonSchema);
     }
 
+    SECTION("Test jsoncons cursor validator") {
+        testJsonconsCursorValidation(tests, type);
+    }
+
     SECTION("Test rapidjson schema validation") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
@@ -124,6 +138,10 @@ TEST_CASE("Test optional int") {
 
     SECTION("Test jsoncons schema validation") {
         testJsonconsValidation(tests, jsonSchema);
+    }
+
+    SECTION("Test jsoncons cursor validator") {
+        testJsonconsCursorValidation(tests, type);
     }
 
     SECTION("Test rapidjson schema validation") {
@@ -165,6 +183,10 @@ TEST_CASE("Test list") {
 
     SECTION("Test jsoncons schema validation") {
         testJsonconsValidation(tests, jsonSchema);
+    }
+
+    SECTION("Test jsoncons cursor validator") {
+        testJsonconsCursorValidation(tests, type);
     }
 
     SECTION("Test rapidjson schema validation") {
@@ -223,6 +245,10 @@ TEST_CASE("Test object with optional string and required int fields") {
         testJsonconsValidation(tests, jsonSchema);
     }
 
+    SECTION("Test jsoncons cursor validator") {
+//        testJsonconsCursorValidation(tests, type);
+    }
+
     SECTION("Test rapidjson schema validation") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
@@ -263,6 +289,10 @@ TEST_CASE("Test list of optional ints") {
 
     SECTION("Test jsoncons schema validation") {
         testJsonconsValidation(tests, jsonSchema);
+    }
+
+    SECTION("Test jsoncons cursor validator") {
+        testJsonconsCursorValidation(tests, type);
     }
 
     SECTION("Test rapidjson schema validation") {
