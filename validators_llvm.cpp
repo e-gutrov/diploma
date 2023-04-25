@@ -18,45 +18,26 @@ json_cursor* toJsonCursor(void* ptr) {
     return reinterpret_cast<json_cursor*>(ptr);
 }
 
-void debugPrint(const std::string& funcName, json_cursor* cursor) {
+//void debugPrint(const std::string& funcName, json_cursor* cursor) {
 //    std::cerr << "debugPrint called, " << funcName << " " << cursor->current().event_type() << std::endl;
-}
+//}
 
 bool IsDone(void* ptr) {
     auto cursor = toJsonCursor(ptr);
-    debugPrint("isDone", cursor);
+//    debugPrint("isDone", cursor);
     return cursor->done();
 }
 
 staj_event_type GetCurrentType(void* ptr) {
     auto cursor = toJsonCursor(ptr);
-    debugPrint("GetCurrentType", cursor);
+//    debugPrint("GetCurrentType", cursor);
     return cursor->current().event_type();
 }
 
 void CallNext(void* ptr) {
     auto cursor = toJsonCursor(ptr);
-    debugPrint("CallNext", cursor);
+//    debugPrint("CallNext", cursor);
     cursor->next();
-}
-
-bool ValidateList(void* ptr, const std::function<bool(void*)>& f) {
-    if (GetCurrentType(ptr) != staj_event_type::begin_array) {
-        return false;
-    }
-    CallNext(ptr);
-    while (GetCurrentType(ptr) != staj_event_type::end_array) {
-        if (!f(ptr)) {
-            return false;
-        }
-    }
-    CallNext(ptr);
-    return true;
-}
-
-bool ValidateStruct(void* ptr, const std::unordered_map<std::string, std::function<bool(void*)>>& fs) {
-    // TODO
-    return false;
 }
 
 // TODO: in case of structs, map each field name to a number and lookup it in a map with an external function?

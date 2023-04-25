@@ -10,6 +10,10 @@
 #include <llvm-c/TargetMachine.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 
+#include <llvm/Transforms/IPO/PassManagerBuilder.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/PassManager.h>
+
 #include "helpers.h"
 #include "validators_llvm.h"
 
@@ -53,6 +57,23 @@ std::unordered_map<std::string, Function*> GenerateFunctionDeclarations(IRBuilde
 orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique_ptr<LLVMContext> context) {
     std::string triple = LLVMGetDefaultTargetTriple();
     module->setTargetTriple(triple);
+    llvm::PassManagerBuilder PMBuilder;
+    PMBuilder.OptLevel = 3;
+    llvm::legacy::FunctionPassManager FPM(module.get());
+    PMBuilder.populateFunctionPassManager(FPM);
+    FPM.doInitialization();
+    for (Function &F : *module) {
+        FPM.run(F);
+    }
+    FPM.doFinalization();
+
+    // TODO: figure out
+    // Optionally, run module-level optimization passes.
+//    llvm::legacy::ModulePassManager MPM;
+//    PMBuilder.populateModulePassManager(MPM);
+//    MPM.run(*module);
+
+    module->dump();
 
     return {std::move(module), std::move(context)};
 }

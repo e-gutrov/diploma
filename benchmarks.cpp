@@ -119,9 +119,9 @@ int main() {
     llvm::InitializeNativeTargetAsmParser();
 
     std::vector<std::string> data{"[1, 2, 3, 4]"};
-    auto intListSchema = CreateList(CreateOptional(CreateOptional(CreateSimple(ValueType::Int)))); // TODO: remove optional
+    auto intListSchema = CreateList(CreateOptional(CreateSimple(ValueType::Int))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 10'000'000;
+    int iterations = 30'000'000;
 
 //    benchJsonconsValidation(data, jsonIntListSchema, iterations);
     benchJsonconsCursorValidation(data, intListSchema, iterations);
