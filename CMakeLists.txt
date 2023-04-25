@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 project(coursework)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS "-O2")
 include_directories(include)
 add_executable(coursework main.cpp validators_jsoncons.cpp validators_jsoncons.h table_schema.h table_schema.cpp exceptions.cpp exceptions.h validators_llvm.cpp validators_llvm.h helpers.cpp helpers.h)
 

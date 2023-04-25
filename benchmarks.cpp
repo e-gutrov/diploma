@@ -43,11 +43,11 @@ void benchJsonconsValidation(const std::vector<std::string>& data, const jsoncon
         int res = 0;
         auto jsonObj = jsoncons::json::parse(json);
         for (int i = 0; i < iterations; ++i) {
-            jsoncons::json_cursor cursor(json);
-            while (!cursor.done()) {
-                cursor.next();
-                ++res;
-            }
+//            jsoncons::json_cursor cursor(json);
+//            while (!cursor.done()) {
+//                cursor.next();
+//                ++res;
+//            }
             res += validator.is_valid(jsonObj);
         }
         std::cout << "jsoncons, res = " << res << std::endl;
@@ -82,9 +82,9 @@ int main() {
     llvm::InitializeNativeTargetAsmParser();
 
     std::vector<std::string> data{"[1, 2, 3, 4]"};
-    auto intListSchema = CreateList(CreateOptional(CreateSimple(ValueType::Int))); // TODO: remove optional
+    auto intListSchema = CreateList((CreateSimple(ValueType::Int))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 5'000'000;
+    int iterations = 1'000'000;
 
     benchJsonconsValidation(data, jsonIntListSchema, iterations);
     benchLLVMValidation(data, intListSchema, iterations);

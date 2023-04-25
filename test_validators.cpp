@@ -3,6 +3,8 @@
 //
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/schema.h>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_session.hpp>
 #include <llvm/Support/TargetSelect.h>
@@ -12,6 +14,7 @@
 #include "validators_jsoncons.h"
 #include "helpers.h"
 
+
 void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tests, const jsoncons::json& jsonSchema) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
     jsoncons::jsonschema::json_validator<jsoncons::json> validator(schema);
@@ -19,6 +22,22 @@ void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tes
         INFO("JSON is: " << json);
         auto validationResult = validator.is_valid(jsoncons::json::parse(json));
         CHECK(validationResult == expected);
+    }
+}
+
+void testRapidJsonValidation(const std::vector<std::pair<std::string, bool>>& tests, const std::string& schemaStr) {
+    rapidjson::Document d;
+    d.Parse(schemaStr.c_str());
+    rapidjson::SchemaDocument sd(d);
+    for (const auto& [json, expected] : tests) {
+        INFO("JSON is: " << json);
+        rapidjson::SchemaValidator validator(sd);
+        rapidjson::Reader reader;
+        rapidjson::MemoryStream is(json.c_str(), json.size());
+        if (!reader.Parse(is, validator) && reader.GetParseErrorCode() != rapidjson::kParseErrorTermination) {
+            throw std::exception();
+        }
+        CHECK(validator.IsValid() == expected);
     }
 }
 
@@ -69,6 +88,10 @@ TEST_CASE("Test int") {
         testJsonconsValidation(tests, jsonSchema);
     }
 
+    SECTION("Test rapidjson schema validation") {
+        testRapidJsonValidation(tests, jsonSchema.to_string());
+    }
+
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
     }
@@ -101,6 +124,10 @@ TEST_CASE("Test optional int") {
 
     SECTION("Test jsoncons schema validation") {
         testJsonconsValidation(tests, jsonSchema);
+    }
+
+    SECTION("Test rapidjson schema validation") {
+        testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
     SECTION("Test generated LLVM IR schema validation") {
@@ -138,6 +165,10 @@ TEST_CASE("Test list") {
 
     SECTION("Test jsoncons schema validation") {
         testJsonconsValidation(tests, jsonSchema);
+    }
+
+    SECTION("Test rapidjson schema validation") {
+        testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
     SECTION("Test generated LLVM IR schema validation") {
@@ -192,6 +223,10 @@ TEST_CASE("Test object with optional string and required int fields") {
         testJsonconsValidation(tests, jsonSchema);
     }
 
+    SECTION("Test rapidjson schema validation") {
+        testRapidJsonValidation(tests, jsonSchema.to_string());
+    }
+
     SECTION("Test generated LLVM IR schema validation") {
 //        testLLVMValidation(tests, type);
     }
@@ -230,6 +265,10 @@ TEST_CASE("Test list of optional ints") {
         testJsonconsValidation(tests, jsonSchema);
     }
 
+    SECTION("Test rapidjson schema validation") {
+        testRapidJsonValidation(tests, jsonSchema.to_string());
+    }
+    
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
     }
