@@ -102,8 +102,10 @@ void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
         for (const auto& json : data) {
+            int res = -1;
+            jsoncons::json_cursor cursor(json);
+            res += func(&cursor);
             Timer t("LLVM");
-            int res = 0;
             for (int i = 0; i < iterations; ++i) {
                 jsoncons::json_cursor cursor(json);
                 res += func(&cursor);
@@ -118,15 +120,16 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    std::vector<std::string> data{"[1, 2, 3, 4]"};
+    std::vector<std::string> data{jsoncons::json(std::vector<int>(1000000)).to_string()};
     auto intListSchema = CreateList(CreateOptional(CreateSimple(ValueType::Int))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 30'000'000;
+    int iterations = 1'000;
 
 //    benchJsonconsValidation(data, jsonIntListSchema, iterations);
+    benchLLVMValidation(data, intListSchema, iterations);
     benchJsonconsCursorValidation(data, intListSchema, iterations);
 //    benchRapidJsonValidation(data, jsonIntListSchema.to_string(), iterations);
-    benchLLVMValidation(data, intListSchema, iterations);
+
 
     return 0;
 }

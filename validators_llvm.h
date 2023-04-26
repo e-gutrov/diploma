@@ -13,9 +13,9 @@
 
 void SayHello();
 
-jsoncons::staj_event_type GetCurrentType(void* ptr);
-bool IsDone(void* ptr);
-void CallNext(void* ptr);
+extern "C" jsoncons::staj_event_type GetCurrentType(void* ptr);
+extern "C" bool IsDone(void* ptr);
+extern "C" void CallNext(void* ptr);
 
 template<ValueType T>
 bool ValidateSimpleType(void* ptr) {

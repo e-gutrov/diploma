@@ -4,7 +4,8 @@
 
 #include <jsoncons/json_cursor.hpp>
 #include <llvm/IR/IRBuilder.h>
-
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Support/SourceMgr.h>
 #include "validators_llvm.h"
 #include "helpers.h"
 
@@ -22,19 +23,19 @@ json_cursor* toJsonCursor(void* ptr) {
 //    std::cerr << "debugPrint called, " << funcName << " " << cursor->current().event_type() << std::endl;
 //}
 
-bool IsDone(void* ptr) {
+extern "C" bool IsDone(void* ptr) {
     auto cursor = toJsonCursor(ptr);
 //    debugPrint("isDone", cursor);
     return cursor->done();
 }
 
-staj_event_type GetCurrentType(void* ptr) {
+extern "C" staj_event_type GetCurrentType(void* ptr) {
     auto cursor = toJsonCursor(ptr);
 //    debugPrint("GetCurrentType", cursor);
     return cursor->current().event_type();
 }
 
-void CallNext(void* ptr) {
+extern "C" void CallNext(void* ptr) {
     auto cursor = toJsonCursor(ptr);
 //    debugPrint("CallNext", cursor);
     cursor->next();
@@ -133,7 +134,11 @@ llvm::Function* DoCreateTypeValidator(
 llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema) {
     auto context = std::make_unique<llvm::LLVMContext>();
     llvm::IRBuilder<> builder(*context);
-    auto module = std::make_unique<llvm::Module>("validating_module", *context);
+    llvm::SMDiagnostic err;
+    auto module = llvm::parseIRFile("/home/egor/CLionProjects/coursework/llvm_madness.ll", err, *context);
+    std::cerr << "Loaded module " << err.getFilename().data() << std::endl;
+//    module->dump();
+//    auto module = std::make_unique<llvm::Module>("validating_module", *context);
     auto functions = GenerateFunctionDeclarations(&builder, module.get());
 
     auto validateRoot = DoCreateTypeValidator(schema, context.get(), &builder, module.get(), functions);
