@@ -113,6 +113,35 @@ void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr
     }
 }
 
+bool hardcodedOptionalListValidate(jsoncons::json_cursor* cursor) {
+    if (!IsType<jsoncons::staj_event_type::begin_array>(cursor)) {
+        return false;
+    }
+    CallNext(cursor);
+    while (!IsType<jsoncons::staj_event_type::end_array>(cursor)) {
+        if (IsType<jsoncons::staj_event_type::null_value>(cursor)) {
+            CallNext(cursor);
+            return true;
+        } else {
+            return ValidateSimpleType<ValueType::Int>(cursor);
+        }
+    }
+    CallNext(cursor);
+    return true;
+}
+
+void benchHardcodedOptionalListValidation(const std::vector<std::string>& data, int iterations) {
+    for (const auto& json : data) {
+        Timer t("benchHardcodedOptionalListValidation");
+        int res = 0;
+        for (int i = 0; i < iterations; ++i) {
+            jsoncons::json_cursor cursor(json);
+            res += hardcodedOptionalListValidate(&cursor);
+        }
+        std::cout << "benchHardcodedOptionalListValidation, res = " << res << std::endl;
+    }
+}
+
 int main() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -121,12 +150,12 @@ int main() {
     std::vector<std::string> data{"[1, 2, 3, 4]"};
     auto intListSchema = CreateList(CreateOptional(CreateSimple(ValueType::Int))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 30'000'000;
+    int iterations = 10'000'000;
 
 //    benchJsonconsValidation(data, jsonIntListSchema, iterations);
     benchJsonconsCursorValidation(data, intListSchema, iterations);
 //    benchRapidJsonValidation(data, jsonIntListSchema.to_string(), iterations);
     benchLLVMValidation(data, intListSchema, iterations);
-
+    benchHardcodedOptionalListValidation(data, iterations);
     return 0;
 }
