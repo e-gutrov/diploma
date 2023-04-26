@@ -6,7 +6,7 @@
 #define COURSEWORK_VALIDATORS_LLVM_H
 
 #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
-#include <jsoncons/staj_cursor.hpp>
+#include <jsoncons/json_cursor.hpp>
 
 #include "table_schema.h"
 
@@ -20,7 +20,9 @@ void CallNext(void* ptr);
 template<ValueType T>
 bool ValidateSimpleType(void* ptr) {
     auto eventType = GetCurrentType(ptr);
-    CallNext(ptr);
+//    CallNext(ptr); // TODO
+    auto cursor = reinterpret_cast<jsoncons::json_cursor*>(ptr);;
+    cursor->next();
     if constexpr (T == ValueType::Int) {
         return eventType == jsoncons::staj_event_type::uint64_value || eventType == jsoncons::staj_event_type::int64_value;
     } else if constexpr (T == ValueType::String) {
