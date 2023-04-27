@@ -102,8 +102,10 @@ void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
         for (const auto& json : data) {
+            int res = -1;
+            jsoncons::json_cursor cursor(json);
+            res += func(&cursor);
             Timer t("LLVM");
-            int res = 0;
             for (int i = 0; i < iterations; ++i) {
                 jsoncons::json_cursor cursor(json);
                 res += func(&cursor);
@@ -114,19 +116,21 @@ void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr
 }
 
 bool hardcodedOptionalListValidate(jsoncons::json_cursor* cursor) {
-    if (!IsType<jsoncons::staj_event_type::begin_array>(cursor)) {
+    if (cursor->current().event_type() != jsoncons::staj_event_type::begin_array) {
         return false;
     }
-    CallNext(cursor);
-    while (!IsType<jsoncons::staj_event_type::end_array>(cursor)) {
-        if (IsType<jsoncons::staj_event_type::null_value>(cursor)) {
+    cursor->next();
+    while (cursor->current().event_type() != jsoncons::staj_event_type::end_array) {
+        if (cursor->current().event_type() != jsoncons::staj_event_type::null_value) {
             CallNext(cursor);
             return true;
         } else {
-            return ValidateSimpleType<ValueType::Int>(cursor);
+            if (!ValidateSimpleType<ValueType::Int>(cursor)) {
+                return false;
+            }
         }
     }
-    CallNext(cursor);
+    cursor->next();
     return true;
 }
 
