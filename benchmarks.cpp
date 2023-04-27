@@ -115,19 +115,51 @@ void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr
     }
 }
 
+bool hardcodedOptionalListValidate(jsoncons::json_cursor* cursor) {
+    if (!IsType<jsoncons::staj_event_type::begin_array>(cursor)) {
+        return false;
+    }
+    CallNext(cursor);
+    while (!IsType<jsoncons::staj_event_type::end_array>(cursor)) {
+        if (IsType<jsoncons::staj_event_type::null_value>(cursor)) {
+            CallNext(cursor);
+            return true;
+        } else {
+            if (!ValidateSimpleType<ValueType::Int>(cursor)) {
+                return false;
+            }
+        }
+    }
+    CallNext(cursor);
+    return true;
+}
+
+void benchHardcodedOptionalListValidation(const std::vector<std::string>& data, int iterations) {
+    for (const auto& json : data) {
+        Timer t("benchHardcodedOptionalListValidation");
+        int res = 0;
+        for (int i = 0; i < iterations; ++i) {
+            jsoncons::json_cursor cursor(json);
+            res += hardcodedOptionalListValidate(&cursor);
+        }
+        std::cout << "benchHardcodedOptionalListValidation, res = " << res << std::endl;
+    }
+}
+
 int main() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
     std::vector<std::string> data{jsoncons::json(std::vector<int>(1000000)).to_string()};
-    auto intListSchema = CreateList(CreateOptional(CreateSimple(ValueType::Int))); // TODO: remove optional
+    auto intListSchema = CreateList((CreateSimple(ValueType::Int))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 1'000;
+    int iterations = 100;
 
 //    benchJsonconsValidation(data, jsonIntListSchema, iterations);
     benchLLVMValidation(data, intListSchema, iterations);
     benchJsonconsCursorValidation(data, intListSchema, iterations);
+    benchHardcodedOptionalListValidation(data, iterations);
 //    benchRapidJsonValidation(data, jsonIntListSchema.to_string(), iterations);
 
 
