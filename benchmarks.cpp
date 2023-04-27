@@ -116,21 +116,21 @@ void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr
 }
 
 bool hardcodedOptionalListValidate(jsoncons::json_cursor* cursor) {
-    if (!IsType<jsoncons::staj_event_type::begin_array>(cursor)) {
+    if (cursor->current().event_type() != jsoncons::staj_event_type::begin_array) {
         return false;
     }
-    CallNext(cursor);
-    while (!IsType<jsoncons::staj_event_type::end_array>(cursor)) {
-        if (IsType<jsoncons::staj_event_type::null_value>(cursor)) {
-            CallNext(cursor);
-            return true;
-        } else {
+    cursor->next();
+    while (cursor->current().event_type() != jsoncons::staj_event_type::end_array) {
+//        if (IsType<jsoncons::staj_event_type::null_value>(cursor)) {
+//            CallNext(cursor);
+//            return true;
+//        } else {
             if (!ValidateSimpleType<ValueType::Int>(cursor)) {
                 return false;
             }
-        }
+//        }
     }
-    CallNext(cursor);
+    cursor->next();
     return true;
 }
 
@@ -154,7 +154,7 @@ int main() {
     std::vector<std::string> data{jsoncons::json(std::vector<int>(1000000)).to_string()};
     auto intListSchema = CreateList((CreateSimple(ValueType::Int))); // TODO: remove optional
     auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 100;
+    int iterations = 200;
 
 //    benchJsonconsValidation(data, jsonIntListSchema, iterations);
     benchLLVMValidation(data, intListSchema, iterations);
