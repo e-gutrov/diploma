@@ -304,6 +304,56 @@ TEST_CASE("Test list of optional ints") {
     }
 }
 
+TEST_CASE("Test tuple of string, int, and list of optional strings") {
+    auto type = CreateTuple({
+        CreateSimple(ValueType::String),
+        CreateSimple(ValueType::Int),
+        CreateList(CreateOptional(CreateSimple(ValueType::String)))});
+    auto jsonSchema = GenerateJsonSchema(type);
+
+    SECTION("Test JSON Schema generation") {
+        auto expected = jsoncons::json::parse(R"(
+        {
+            "items": [
+                {"type":"string"},
+                {"type":"integer"},
+                {"items":{"anyOf":[{"type":"null"},{"type":"string"}]}, "type":"array"}],
+            "maxItems":3,
+            "minItems":3,
+            "type":"array"
+        })");
+        REQUIRE(jsonSchema == expected);
+    }
+
+    auto tests = std::vector<std::pair<std::string, bool>>{
+        {R"(["abra", 12, ["cadabra", "second"]])", true},
+        {R"(["abra", 12, [null]])", true},
+        {R"(["abra", 12, []])", true},
+        {R"(["abra", 12, [], 100])", false},
+        {R"(["abra", 12])", false},
+        {R"(["abra"])", false},
+        {R"([])", false},
+        {R"(["abra", 12, "cadabra"])", false},
+        {R"(["abra", 12, [["cadabra"]]])", false},
+    };
+
+    SECTION("Test jsoncons schema validation") {
+        testJsonconsValidation(tests, jsonSchema);
+    }
+
+    SECTION("Test jsoncons cursor validator") {
+        testJsonconsCursorValidation(tests, type);
+    }
+
+    SECTION("Test rapidjson schema validation") {
+        testRapidJsonValidation(tests, jsonSchema.to_string());
+    }
+
+    SECTION("Test generated LLVM IR schema validation") {
+        testLLVMValidation(tests, type);
+    }
+}
+
 int main(int argc, char** argv) {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
