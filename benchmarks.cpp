@@ -26,11 +26,11 @@ public:
     }
 
     void PrintElapsed(const std::string& s) const {
-        std::cout << s << ", elapsed " << SecondsElapsed() << std::endl;
+        std::cout << s << ", elapsed \t" << SecondsElapsed() << std::endl;
     }
 
     ~Timer() {
-        PrintElapsed("~Timer()");
+        PrintElapsed(Name_);
     }
 
 private:
@@ -38,60 +38,49 @@ private:
     std::string Name_;
 };
 
-void benchJsonconsValidation(const std::vector<std::string>& data, const jsoncons::json& jsonSchema, int iterations) {
+void benchJsonconsValidation(const std::string& data, const jsoncons::json& jsonSchema, int iterations) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
     jsoncons::jsonschema::json_validator<jsoncons::json> validator(schema);
-    for (const auto& json : data) {
-        Timer t("jsoncons");
-        int res = 0;
-        auto jsonObj = jsoncons::json::parse(json);
-        for (int i = 0; i < iterations; ++i) {
-            jsoncons::json_cursor cursor(json);
-            while (!cursor.done()) {
-                cursor.next();
-                ++res;
-            }
-            res += validator.is_valid(jsonObj);
-        }
-        std::cout << "jsoncons, res = " << res << std::endl;
+    Timer t("jsoncons");
+    int res = 0;
+    auto jsonObj = jsoncons::json::parse(data);
+    for (int i = 0; i < iterations; ++i) {
+        res += validator.is_valid(jsonObj);
     }
+    std::cout << "jsoncons, res = " << res << std::endl;
 }
 
-void benchJsonconsCursorValidation(const std::vector<std::string>& data, const TypeBasePtr& type, int iterations) {
+void benchJsonconsCursorValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
     auto validator = CreateCursorValidator(type);
-    for (const auto& json : data) {
-        Timer t("jsoncons cursor");
-        int res = 0;
-        for (int i = 0; i < iterations; ++i) {
-            jsoncons::json_cursor cursor(json);
-            res += validator->Validate(&cursor);
-        }
-        std::cout << "jsoncons cursor, res = " << res << std::endl;
+    Timer t("poly cursor");
+    int res = 0;
+    for (int i = 0; i < iterations; ++i) {
+        jsoncons::json_cursor cursor(data);
+        res += validator->Validate(&cursor);
     }
+    std::cout << "jsoncons cursor, res = " << res << std::endl;
 }
 
-void benchRapidJsonValidation(const std::vector<std::string>& data, const std::string& schemaStr, int iterations) {
+void benchRapidJsonValidation(const std::string& data, const std::string& schemaStr, int iterations) {
     rapidjson::Document d;
     d.Parse(schemaStr.c_str());
     rapidjson::SchemaDocument sd(d);
-    for (const auto& json : data) {
-        Timer t("RapidJSON");
-        int res = 0;
-        rapidjson::SchemaValidator validator(sd);
-        for (int i = 0; i < iterations; ++i) {
-            rapidjson::Reader reader;
-            rapidjson::MemoryStream is(json.c_str(), json.size());
-            if (!reader.Parse(is, validator) && reader.GetParseErrorCode() != rapidjson::kParseErrorTermination) {
-                throw std::exception();
-            }
-            res += validator.IsValid();
-            validator.Reset();
+    Timer t("RapidJSON");
+    int res = 0;
+    rapidjson::SchemaValidator validator(sd);
+    for (int i = 0; i < iterations; ++i) {
+        rapidjson::Reader reader;
+        rapidjson::MemoryStream is(data.c_str(), data.size());
+        if (!reader.Parse(is, validator) && reader.GetParseErrorCode() != rapidjson::kParseErrorTermination) {
+            throw std::exception();
         }
-        std::cout << "RapidJSON, res = " << res << std::endl;
+        res += validator.IsValid();
+        validator.Reset();
     }
+    std::cout << "RapidJSON, res = " << res << std::endl;
 }
 
-void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr& type, int iterations) {
+void benchLLVMValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
     auto jit = PrepareJit();
     if (auto err = jit->addIRModule(CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
@@ -101,48 +90,105 @@ void benchLLVMValidation(const std::vector<std::string>& data, const TypeBasePtr
         std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
-        for (const auto& json : data) {
-            int res = -1;
-            jsoncons::json_cursor cursor(json);
-            res += func(&cursor);
-            Timer t("LLVM");
-            for (int i = 0; i < iterations; ++i) {
-                jsoncons::json_cursor cursor(json);
-                res += func(&cursor);
-            }
-            std::cout << "LLVM, res = " << res << std::endl;
-        }
-    }
-}
-
-bool hardcodedOptionalListValidate(jsoncons::json_cursor* cursor) {
-    if (cursor->current().event_type() != jsoncons::staj_event_type::begin_array) {
-        return false;
-    }
-    cursor->next();
-    while (cursor->current().event_type() != jsoncons::staj_event_type::end_array) {
-        if (cursor->current().event_type() == jsoncons::staj_event_type::null_value) {
-            CallNext(cursor);
-        } else {
-            if (!ValidateSimpleType<ValueType::Int>(cursor)) {
-                return false;
-            }
-        }
-    }
-    cursor->next();
-    return true;
-}
-
-void benchHardcodedOptionalListValidation(const std::vector<std::string>& data, int iterations) {
-    for (const auto& json : data) {
-        Timer t("benchHardcodedOptionalListValidation");
-        int res = 0;
+        int res = -1;
+        jsoncons::json_cursor cursor(data);
+        res += func(&cursor);
+        Timer t("LLVM");
         for (int i = 0; i < iterations; ++i) {
-            jsoncons::json_cursor cursor(json);
-            res += hardcodedOptionalListValidate(&cursor);
+            jsoncons::json_cursor cursor(data);
+            res += func(&cursor);
         }
-        std::cout << "benchHardcodedOptionalListValidation, res = " << res << std::endl;
+        std::cout << "LLVM, res = " << res << std::endl;
     }
+}
+
+void runAllBenchmarks(
+        const std::string& schemaName,
+        const std::vector<std::pair<std::string, std::string>>& inputs,
+        const TypeBasePtr& schema,
+        int iterations) {
+    auto jsonSchema = GenerateJsonSchema(schema);
+
+    std::cout << schemaName << "\n=====================\n";
+    for (const auto& [name, data] : inputs) {
+        std::cout << name << "\n=====================\n";
+        benchJsonconsValidation(data, jsonSchema, iterations);
+        benchJsonconsCursorValidation(data, schema, iterations);
+        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
+        benchLLVMValidation(data, schema, iterations);
+        std::cout << "=====================\n";
+    }
+    std::cout << "\n\n";
+}
+
+std::string createListOfTokens(int elems, const std::string& token) {
+    std::string result = "[";
+    for (int i = 0; i < elems; ++i) {
+        if (i > 0) {
+            result += ", ";
+        }
+        result += token;
+    }
+    result += "]";
+    return result;
+}
+
+std::string createListOfAlternatingTokens(int elems, const std::string& tokenEven, const std::string& tokenOdd) {
+    std::string result = "[";
+    for (int i = 0; i < elems; ++i) {
+        if (i > 0) {
+            result += ", ";
+        }
+        result += (i % 2 == 0 ? tokenEven : tokenOdd);
+    }
+    result += "]";
+    return result;
+}
+
+void benchListOfInts(int elems, int iterations) {
+    auto schema = CreateList(CreateSimple(ValueType::Int));
+    std::vector<std::pair<std::string, std::string>> data{{"Basic", jsoncons::json(std::vector<int>(elems)).to_string()}};
+    runAllBenchmarks("List of ints", data, schema, iterations);
+}
+
+void benchListOfOptionalInts(int elems, int iterations) {
+    auto schema = CreateList(CreateOptional(CreateSimple(ValueType::Int)));
+    std::vector<std::pair<std::string, std::string>> data{
+        {"All nulls", createListOfTokens(elems, "null")},
+        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
+        {"All ints", createListOfTokens(elems, "123")},
+    };
+    runAllBenchmarks("List of optional ints", data, schema, iterations);
+}
+
+void benchListOf5xOptionalInts(int elems, int iterations) {
+    auto schema = CreateList(
+            CreateOptional(CreateOptional(CreateOptional(CreateOptional(CreateOptional(
+                    CreateSimple(ValueType::Int)))))));
+    std::vector<std::pair<std::string, std::string>> data{
+        {"All nulls", createListOfTokens(elems, "null")},
+        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
+        {"All ints", createListOfTokens(elems, "123")},
+    };
+    runAllBenchmarks("List of optional x5 ints", data, schema, iterations);
+}
+
+void benchListOfStrings(int elems, int iterations) {
+    auto schema = CreateList(CreateSimple(ValueType::String));
+    std::vector<std::pair<std::string, std::string>> data{
+        {"Basic", createListOfTokens(elems, "\"abracadabra\"")},
+    };
+    runAllBenchmarks("List of strings", data, schema, iterations);
+}
+
+void benchListOfOptionalStrings(int elems, int iterations) {
+    auto schema = CreateList(CreateOptional(CreateSimple(ValueType::String)));
+    std::vector<std::pair<std::string, std::string>> data{
+            {"All nulls", createListOfTokens(elems, "null")},
+            {"Every other null", createListOfAlternatingTokens(elems, "null", "\"abracadabra\"")},
+            {"All strings", createListOfTokens(elems, "\"abracadabra\"")},
+    };
+    runAllBenchmarks("List of optional strings", data, schema, iterations);
 }
 
 int main() {
@@ -150,15 +196,10 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    std::vector<std::string> data{jsoncons::json(std::vector<int>(1000000)).to_string()};
-    auto intListSchema = CreateList((CreateSimple(ValueType::Int))); // TODO: remove optional
-    auto jsonIntListSchema = GenerateJsonSchema(intListSchema);
-    int iterations = 200;
-
-//    benchJsonconsValidation(data, jsonIntListSchema, iterations);
-//    benchJsonconsCursorValidation(data, intListSchema, iterations);
-//    benchRapidJsonValidation(data, jsonIntListSchema.to_string(), iterations);
-    benchLLVMValidation(data, intListSchema, iterations);
-//    benchHardcodedOptionalListValidation(data, iterations);
+    benchListOfInts(10000, 20000);
+    benchListOfOptionalInts(10000, 10000);
+    benchListOf5xOptionalInts(10000, 10000);
+    benchListOfStrings(10000, 10000);
+    benchListOfOptionalStrings(10000, 10000);
     return 0;
 }
