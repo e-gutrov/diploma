@@ -14,6 +14,7 @@ enum class ValueType {
     String,
     Optional,
     List,
+    Tuple,
     Object,
 };
 
@@ -39,6 +40,7 @@ public:
 TypeBasePtr CreateSimple(ValueType);
 TypeBasePtr CreateOptional(TypeBasePtr);
 TypeBasePtr CreateList(TypeBasePtr);
+TypeBasePtr CreateTuple(std::vector<TypeBasePtr>);
 TypeBasePtr CreateObject(std::vector<StructFieldPtr>);
 
 #endif //COURSEWORK_TABLE_SCHEMA_H

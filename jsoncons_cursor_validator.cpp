@@ -63,6 +63,30 @@ private:
     std::unique_ptr<CursorValidator> ChildValidator_;
 };
 
+class TupleValidator : public CursorValidator {
+public:
+    TupleValidator(std::vector<std::unique_ptr<CursorValidator>> children) : ChildValidators_(std::move(children)) {}
+
+    bool Validate(jsoncons::json_cursor* cursor) {
+        if (cursor->current().event_type() != jsoncons::staj_event_type::begin_array) {
+            return false;
+        }
+        cursor->next();
+        for (const auto & child : ChildValidators_) {
+            if (!child->Validate(cursor)) {
+                return false;
+            }
+        }
+        if (cursor->current().event_type() != jsoncons::staj_event_type::end_array) {
+            return false;
+        }
+        cursor->next();
+        return true;
+    }
+private:
+    std::vector<std::unique_ptr<CursorValidator>> ChildValidators_;
+};
+
 //class StructValidator : public CursorValidator {
 //public:
 //
@@ -98,6 +122,13 @@ std::unique_ptr<CursorValidator> CreateCursorValidator(const TypeBasePtr& schema
         }
         case ValueType::List: {
             return std::make_unique<ListValidator>(CreateCursorValidator(schema->Child(), depth + 1));
+        }
+        case ValueType::Tuple: {
+            std::vector<std::unique_ptr<CursorValidator>> children;
+            for (const auto& child : schema->Children()) {
+                children.emplace_back(CreateCursorValidator(child->Schema, depth + 1));
+            }
+            return std::make_unique<TupleValidator>(std::move(children));
         }
         case ValueType::Object: {
             assert(0);
