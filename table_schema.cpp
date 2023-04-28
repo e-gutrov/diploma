@@ -94,6 +94,7 @@ TypeBasePtr CreateOptional(TypeBasePtr child) {
 TypeBasePtr CreateList(TypeBasePtr child) {
     return std::make_shared<SingleChildType>(ValueType::List, std::move(child));
 }
+
 TypeBasePtr CreateTuple(std::vector<TypeBasePtr> schemas) {
     std::vector<StructFieldPtr> children;
     for (const auto& schema : schemas) {

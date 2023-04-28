@@ -37,6 +37,17 @@ jsoncons::json GenerateJsonSchema(const TypeBasePtr& type) {
             result["items"] = GenerateJsonSchema(type->Child());
             return result;
         }
+        case ValueType::Tuple: {
+            auto result = generateTypeJson("array");
+            std::vector<jsoncons::json> items;
+            for (const auto& child : type->Children()) {
+                items.push_back(GenerateJsonSchema(child->Schema));
+            }
+            result["items"] = items;
+            result["minItems"] = items.size();
+            result["maxItems"] = items.size();
+            return result;
+        }
         case ValueType::Object: {
             auto result = generateTypeJson("object");
 //            result["properties"] = jsoncons::json();
