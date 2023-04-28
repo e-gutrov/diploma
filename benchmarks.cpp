@@ -191,15 +191,25 @@ void benchListOfOptionalStrings(int elems, int iterations) {
     runAllBenchmarks("List of optional strings", data, schema, iterations);
 }
 
+void benchListOfListOfOptionalListOfInts(int elems, int iterations) {
+    auto schema = CreateList(CreateList(CreateOptional(CreateList(CreateSimple(ValueType::Int)))));
+    std::vector<std::pair<std::string, std::string>> data{
+        {"Basic", createListOfAlternatingTokens(elems, "[[1, 2, 3], [], null]", "[[]]")},
+    };
+    runAllBenchmarks("List of list of list of ints", data, schema, iterations);
+}
+
 int main() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    benchListOfInts(10000, 20000);
-    benchListOfOptionalInts(10000, 10000);
-    benchListOf5xOptionalInts(10000, 10000);
-    benchListOfStrings(10000, 10000);
-    benchListOfOptionalStrings(10000, 10000);
+//    benchListOfInts(10000, 20000);
+//    benchListOfOptionalInts(10000, 10000);
+//    benchListOf5xOptionalInts(10000, 10000);
+//    benchListOfStrings(10000, 10000);
+//    benchListOfOptionalStrings(10000, 10000);
+
+    benchListOfListOfOptionalListOfInts(1000, 10000);
     return 0;
 }
