@@ -117,6 +117,50 @@ llvm::Function* DoCreateTypeValidator(
             builder->CreateCondBr(childCall, while_, retFalse);
             return func;
         }
+        case ValueType::Tuple: {
+            std::vector<llvm::Function*> childValidators;
+            int childCount = 0;
+            for (const auto& child: schema->Children()) {
+                ++childCount;
+                childValidators.emplace_back(DoCreateTypeValidator(
+                        child->Schema,
+                        context,
+                        builder,
+                        module,
+                        functions,
+                        suffix + std::to_string(childCount)));
+            }
+            auto func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, funcName, module);
+
+            auto entry = llvm::BasicBlock::Create(*context, "entry", func);
+            builder->SetInsertPoint(entry);
+            auto isBeginArray = builder->CreateCall(functions.at("IsBeginArray"), {func->arg_begin()});
+
+            auto retFalse = llvm::BasicBlock::Create(*context, "retFalse", func);
+            auto nextField = llvm::BasicBlock::Create(*context, "field0", func);
+            builder->CreateCondBr(isBeginArray, nextField, retFalse);
+            {
+                builder->SetInsertPoint(retFalse);
+                builder->CreateRet(builder->getInt1(false));
+            }
+            for (int i = 0; i < childValidators.size(); ++i) {
+                builder->SetInsertPoint(nextField);
+                if (i == 0) {
+                    builder->CreateCall(functions.at("CallNext"), {func->arg_begin()});
+                }
+                nextField = llvm::BasicBlock::Create(*context, "field" + std::to_string(i + 1), func);
+                auto childCall = builder->CreateCall(childValidators[i], {func->arg_begin()});
+                builder->CreateCondBr(childCall, nextField, retFalse);
+            }
+            builder->SetInsertPoint(nextField);
+            auto callNextAndRetTrue = llvm::BasicBlock::Create(*context, "callNextAndRetTrue", func);
+            auto isEndArray = builder->CreateCall(functions.at("IsEndArray"), {func->arg_begin()});
+            builder->CreateCondBr(isEndArray, callNextAndRetTrue, retFalse);
+            builder->SetInsertPoint(callNextAndRetTrue);
+            builder->CreateCall(functions.at("CallNext"), {func->arg_begin()});
+            builder->CreateRet(builder->getInt1(true));
+            return func;
+        }
         case ValueType::Object: {
             // auto children
             // TODO
