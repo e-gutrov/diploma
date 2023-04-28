@@ -4,15 +4,13 @@
 
 #include <jsoncons/json_cursor.hpp>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Support/SourceMgr.h>
 
 #include "validators_llvm.h"
 #include "helpers.h"
 
 using namespace jsoncons;
-
-void SayHello() {
-    std::cout << "Hello LLVM!" << '\n';
-}
 
 json_cursor* toJsonCursor(void* ptr) {
     return reinterpret_cast<json_cursor*>(ptr);
@@ -133,7 +131,8 @@ llvm::Function* DoCreateTypeValidator(
 llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema) {
     auto context = std::make_unique<llvm::LLVMContext>();
     llvm::IRBuilder<> builder(*context);
-    auto module = std::make_unique<llvm::Module>("validating_module", *context);
+    llvm::SMDiagnostic err;
+    auto module = llvm::parseIRFile("/home/egor/CLionProjects/coursework/llvm_madness.ll", err, *context);
     auto functions = GenerateFunctionDeclarations(&builder, module.get());
 
     auto validateRoot = DoCreateTypeValidator(schema, context.get(), &builder, module.get(), functions);
@@ -152,6 +151,5 @@ llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema
     auto result = builder.CreateAnd(validateResult, isDone);
     builder.CreateRet(result);
 
-//    module->print(llvm::outs(), nullptr);
     return FinalizeModule(std::move(module), std::move(context));
 }
