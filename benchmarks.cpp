@@ -112,9 +112,9 @@ void runAllBenchmarks(
     std::cout << schemaName << "\n=====================\n";
     for (const auto& [name, data] : inputs) {
         std::cout << name << "\n=====================\n";
-        benchJsonconsValidation(data, jsonSchema, iterations);
+//        benchJsonconsValidation(data, jsonSchema, iterations);
         benchJsonconsCursorValidation(data, schema, iterations);
-        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
+//        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
         benchLLVMValidation(data, schema, iterations);
         std::cout << "=====================\n";
     }
@@ -199,6 +199,19 @@ void benchListOfListOfOptionalListOfInts(int elems, int iterations) {
     runAllBenchmarks("List of list of list of ints", data, schema, iterations);
 }
 
+void benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(int elems, int iterations) {
+    auto schema = CreateList(CreateTuple({
+         CreateSimple(ValueType::String),
+         CreateSimple(ValueType::Int),
+         CreateOptional(CreateList(CreateOptional(CreateSimple(ValueType::String))))}));
+    std::vector<std::pair<std::string, std::string>> data{
+            {"Basic", createListOfAlternatingTokens(
+                    elems,
+                    R"(["abra", 12, ["cadabra", "second"]])",
+                    R"(["abra", 12, [null, "second"]])")}};
+    runAllBenchmarks("List of tuples of string, int, and optional list of optional strings", data, schema, iterations);
+}
+
 int main() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -210,6 +223,7 @@ int main() {
 //    benchListOfStrings(10000, 10000);
 //    benchListOfOptionalStrings(10000, 10000);
 
-    benchListOfListOfOptionalListOfInts(1000, 10000);
+//    benchListOfListOfOptionalListOfInts(1000, 10000);
+    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(10000, 10000);
     return 0;
 }
