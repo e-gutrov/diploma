@@ -18,7 +18,7 @@ add_executable(coursework
         helpers.h
         jsoncons_cursor_validator.cpp)
 
-find_package(LLVM REQUIRED CONFIG)
+find_package(LLVM 16.0.0 REQUIRED CONFIG EXACT)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
@@ -43,6 +43,8 @@ llvm_map_components_to_libnames(llvm_libs
 
 # Link against LLVM libraries
 target_link_libraries(coursework ${llvm_libs})
+
+add_subdirectory(include/ytsaurus)
 
 # For tests
 find_package(Catch2 3 REQUIRED)
