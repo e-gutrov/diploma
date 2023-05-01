@@ -37,18 +37,19 @@ target_link_options(yson_coursework PRIVATE
 vcs_info(yson_coursework)
 
 add_executable(coursework
-        main.cpp
-        validators_jsoncons.cpp
-        validators_jsoncons.h
-        table_schema.h
-        table_schema.cpp
-        exceptions.cpp
-        exceptions.h
-        validators_llvm.cpp
-        validators_llvm.h
-        helpers.cpp
-        helpers.h
-        jsoncons_cursor_validator.cpp)
+    main.cpp
+    validators_jsoncons.cpp
+    validators_jsoncons.h
+    table_schema.h
+    table_schema.cpp
+    exceptions.cpp
+    exceptions.h
+    validators_llvm.cpp
+    validators_llvm.h
+    helpers.cpp
+    helpers.h
+    jsoncons_cursor_validator.cpp
+)
 
 find_package(LLVM 16.0.0 REQUIRED CONFIG EXACT)
 
@@ -62,16 +63,16 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
 llvm_map_components_to_libnames(llvm_libs
-        support
-        core
-        irreader
-        orcjit
-        X86AsmParser
-        X86CodeGen
-        X86Desc
-        X86Disassembler
-        X86Info
-        ExecutionEngine)
+    support
+    core
+    irreader
+    orcjit
+    X86AsmParser
+    X86CodeGen
+    X86Desc
+    X86Disassembler
+    X86Info
+    ExecutionEngine)
 
 # Link against LLVM libraries
 target_link_libraries(coursework ${llvm_libs})
@@ -80,8 +81,23 @@ target_link_libraries(coursework ${llvm_libs})
 # For tests
 find_package(Catch2 3 REQUIRED)
 # These tests can use the Catch2-provided main
-add_executable(tests test_validators.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp jsoncons_cursor_validator.cpp)
+add_executable(tests
+    test_validators.cpp
+    validators_jsoncons.cpp
+    validators_llvm.cpp
+    helpers.cpp
+    table_schema.cpp
+    exceptions.cpp
+    jsoncons_cursor_validator.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2 ${llvm_libs})
 
-add_executable(json_benchmarks json_benchmarks.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp jsoncons_cursor_validator.cpp)
+add_executable(json_benchmarks
+    json_benchmarks.cpp
+    validators_jsoncons.cpp
+    validators_llvm.cpp
+    helpers.cpp
+    table_schema.cpp
+    exceptions.cpp
+    jsoncons_cursor_validator.cpp)
+
 target_link_libraries(json_benchmarks ${llvm_libs})
