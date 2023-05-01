@@ -3,7 +3,39 @@ project(coursework)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-O2")
-include_directories(include)
+
+include_directories(include ${PROJECT_SOURCE_DIR}/include/ytsaurus)
+#include/ytsaurus/contrib/libs/cxxsupp/libcxx/include
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/ytsaurus/cmake/)
+add_subdirectory(include/ytsaurus)
+add_executable(yson_coursework yson_main.cpp yson_cursor_validator.cpp)
+target_compile_options(yson_coursework PRIVATE
+    -Wdeprecated-this-capture
+)
+find_package(Python3 3.7 EXACT COMPONENTS Interpreter)
+target_link_libraries(yson_coursework PUBLIC
+    contrib-libs-linux-headers
+    contrib-libs-cxxsupp
+    yutil
+    cpp-malloc-tcmalloc
+    libs-tcmalloc-no_percpu_cache
+    library-cpp-cpuid_check
+    cpp-mapreduce-interface
+    cpp-mapreduce-client
+)
+target_link_options(yson_coursework PRIVATE
+    -ldl
+    -lrt
+    -Wl,--no-as-needed
+    -fPIC
+    -fPIC
+    -lpthread
+    -lrt
+    -ldl
+    -lutil
+)
+vcs_info(yson_coursework)
+
 add_executable(coursework
         main.cpp
         validators_jsoncons.cpp
@@ -44,7 +76,6 @@ llvm_map_components_to_libnames(llvm_libs
 # Link against LLVM libraries
 target_link_libraries(coursework ${llvm_libs})
 
-add_subdirectory(include/ytsaurus)
 
 # For tests
 find_package(Catch2 3 REQUIRED)
