@@ -83,5 +83,5 @@ find_package(Catch2 3 REQUIRED)
 add_executable(tests test_validators.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp jsoncons_cursor_validator.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2 ${llvm_libs})
 
-add_executable(benchmark benchmarks.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp jsoncons_cursor_validator.cpp)
-target_link_libraries(benchmark ${llvm_libs})
+add_executable(json_benchmarks json_benchmarks.cpp validators_jsoncons.cpp validators_llvm.cpp helpers.cpp table_schema.cpp exceptions.cpp jsoncons_cursor_validator.cpp)
+target_link_libraries(json_benchmarks ${llvm_libs})
