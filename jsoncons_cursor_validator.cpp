@@ -5,7 +5,7 @@
 #include "jsoncons_cursor_validator.h"
 #include "table_schema.h"
 
-class SimpleValidator : public CursorValidator {
+class SimpleValidator : public JsonconsCursorValidator {
 public:
     SimpleValidator(ValueType t) : ValueType_(t) {}
 
@@ -24,9 +24,9 @@ private:
     ValueType ValueType_;
 };
 
-class OptionalValidator : public CursorValidator {
+class OptionalValidator : public JsonconsCursorValidator {
 public:
-    OptionalValidator(std::unique_ptr<CursorValidator> child) : ChildValidator_(std::move(child)) {}
+    OptionalValidator(std::unique_ptr<JsonconsCursorValidator> child) : ChildValidator_(std::move(child)) {}
 
     bool Validate(jsoncons::json_cursor* cursor) {
         auto tp = cursor->current().event_type();
@@ -38,12 +38,12 @@ public:
         }
     }
 private:
-    std::unique_ptr<CursorValidator> ChildValidator_;
+    std::unique_ptr<JsonconsCursorValidator> ChildValidator_;
 };
 
-class ListValidator : public CursorValidator {
+class ListValidator : public JsonconsCursorValidator {
 public:
-    ListValidator(std::unique_ptr<CursorValidator> child) : ChildValidator_(std::move(child)) {}
+    ListValidator(std::unique_ptr<JsonconsCursorValidator> child) : ChildValidator_(std::move(child)) {}
 
     bool Validate(jsoncons::json_cursor* cursor) {
         if (cursor->current().event_type() != jsoncons::staj_event_type::begin_array) {
@@ -60,12 +60,12 @@ public:
     }
 
 private:
-    std::unique_ptr<CursorValidator> ChildValidator_;
+    std::unique_ptr<JsonconsCursorValidator> ChildValidator_;
 };
 
-class TupleValidator : public CursorValidator {
+class TupleValidator : public JsonconsCursorValidator {
 public:
-    TupleValidator(std::vector<std::unique_ptr<CursorValidator>> children) : ChildValidators_(std::move(children)) {}
+    TupleValidator(std::vector<std::unique_ptr<JsonconsCursorValidator>> children) : ChildValidators_(std::move(children)) {}
 
     bool Validate(jsoncons::json_cursor* cursor) {
         if (cursor->current().event_type() != jsoncons::staj_event_type::begin_array) {
@@ -84,19 +84,19 @@ public:
         return true;
     }
 private:
-    std::vector<std::unique_ptr<CursorValidator>> ChildValidators_;
+    std::vector<std::unique_ptr<JsonconsCursorValidator>> ChildValidators_;
 };
 
-//class StructValidator : public CursorValidator {
+//class StructValidator : public JsonconsCursorValidator {
 //public:
 //
 //private:
-//    std::unordered_map<std::string, std::unique_ptr<CursorValidator>> ChildValidators_;
+//    std::unordered_map<std::string, std::unique_ptr<JsonconsCursorValidator>> ChildValidators_;
 //};
 
-class RootValidator : public CursorValidator {
+class RootValidator : public JsonconsCursorValidator {
 public:
-    RootValidator(std::unique_ptr<CursorValidator> child) : ChildValidator_(std::move(child)) {}
+    RootValidator(std::unique_ptr<JsonconsCursorValidator> child) : ChildValidator_(std::move(child)) {}
 
     bool Validate(jsoncons::json_cursor* cursor) {
         auto validationResult = ChildValidator_->Validate(cursor);
@@ -104,10 +104,10 @@ public:
     }
 
 private:
-    std::unique_ptr<CursorValidator> ChildValidator_;
+    std::unique_ptr<JsonconsCursorValidator> ChildValidator_;
 };
 
-std::unique_ptr<CursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth) {
+std::unique_ptr<JsonconsCursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth) {
     if (depth == 0) {
         return std::make_unique<RootValidator>(CreateCursorValidator(schema, depth + 1));
     }
@@ -124,7 +124,7 @@ std::unique_ptr<CursorValidator> CreateCursorValidator(const TypeBasePtr& schema
             return std::make_unique<ListValidator>(CreateCursorValidator(schema->Child(), depth + 1));
         }
         case ValueType::Tuple: {
-            std::vector<std::unique_ptr<CursorValidator>> children;
+            std::vector<std::unique_ptr<JsonconsCursorValidator>> children;
             for (const auto& child : schema->Children()) {
                 children.emplace_back(CreateCursorValidator(child->Schema, depth + 1));
             }

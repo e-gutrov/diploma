@@ -9,12 +9,12 @@
 
 #include "table_schema.h"
 
-class CursorValidator {
+class JsonconsCursorValidator {
 public:
     virtual bool Validate(jsoncons::json_cursor*) = 0;
-    virtual ~CursorValidator() = default;
+    virtual ~JsonconsCursorValidator() = default;
 };
 
-std::unique_ptr<CursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth = 0);
+std::unique_ptr<JsonconsCursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth = 0);
 
 #endif //COURSEWORK_JSONCONS_CURSOR_VALIDATOR_H
