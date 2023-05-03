@@ -87,13 +87,6 @@ private:
     std::vector<std::unique_ptr<JsonconsCursorValidator>> ChildValidators_;
 };
 
-//class StructValidator : public JsonconsCursorValidator {
-//public:
-//
-//private:
-//    std::unordered_map<std::string, std::unique_ptr<JsonconsCursorValidator>> ChildValidators_;
-//};
-
 class RootValidator : public JsonconsCursorValidator {
 public:
     RootValidator(std::unique_ptr<JsonconsCursorValidator> child) : ChildValidator_(std::move(child)) {}
@@ -107,9 +100,9 @@ private:
     std::unique_ptr<JsonconsCursorValidator> ChildValidator_;
 };
 
-std::unique_ptr<JsonconsCursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth) {
+std::unique_ptr<JsonconsCursorValidator> CreateJsonconsCursorValidator(const TypeBasePtr& schema, int depth) {
     if (depth == 0) {
-        return std::make_unique<RootValidator>(CreateCursorValidator(schema, depth + 1));
+        return std::make_unique<RootValidator>(CreateJsonconsCursorValidator(schema, depth + 1));
     }
     auto type = schema->GetType();
     switch (type) {
@@ -118,15 +111,15 @@ std::unique_ptr<JsonconsCursorValidator> CreateCursorValidator(const TypeBasePtr
             return std::make_unique<SimpleValidator>(type);
         }
         case ValueType::Optional: {
-            return std::make_unique<OptionalValidator>(CreateCursorValidator(schema->Child(), depth + 1));
+            return std::make_unique<OptionalValidator>(CreateJsonconsCursorValidator(schema->Child(), depth + 1));
         }
         case ValueType::List: {
-            return std::make_unique<ListValidator>(CreateCursorValidator(schema->Child(), depth + 1));
+            return std::make_unique<ListValidator>(CreateJsonconsCursorValidator(schema->Child(), depth + 1));
         }
         case ValueType::Tuple: {
             std::vector<std::unique_ptr<JsonconsCursorValidator>> children;
             for (const auto& child : schema->Children()) {
-                children.emplace_back(CreateCursorValidator(child->Schema, depth + 1));
+                children.emplace_back(CreateJsonconsCursorValidator(child->Schema, depth + 1));
             }
             return std::make_unique<TupleValidator>(std::move(children));
         }

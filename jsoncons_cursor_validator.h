@@ -15,6 +15,6 @@ public:
     virtual ~JsonconsCursorValidator() = default;
 };
 
-std::unique_ptr<JsonconsCursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth = 0);
+std::unique_ptr<JsonconsCursorValidator> CreateJsonconsCursorValidator(const TypeBasePtr& schema, int depth = 0);
 
 #endif //COURSEWORK_JSONCONS_CURSOR_VALIDATOR_H

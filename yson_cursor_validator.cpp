@@ -100,9 +100,9 @@ private:
     std::unique_ptr<YsonCursorValidator> ChildValidator_;
 };
 
-std::unique_ptr<YsonCursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth) {
+std::unique_ptr<YsonCursorValidator> CreateYsonCursorValidator(const TypeBasePtr& schema, int depth) {
     if (depth == 0) {
-        return std::make_unique<RootValidator>(CreateCursorValidator(schema, depth + 1));
+        return std::make_unique<RootValidator>(CreateYsonCursorValidator(schema, depth + 1));
     }
     auto type = schema->GetType();
     switch (type) {
@@ -111,15 +111,15 @@ std::unique_ptr<YsonCursorValidator> CreateCursorValidator(const TypeBasePtr& sc
             return std::make_unique<SimpleValidator>(type);
         }
         case ValueType::Optional: {
-            return std::make_unique<OptionalValidator>(CreateCursorValidator(schema->Child(), depth + 1));
+            return std::make_unique<OptionalValidator>(CreateYsonCursorValidator(schema->Child(), depth + 1));
         }
         case ValueType::List: {
-            return std::make_unique<ListValidator>(CreateCursorValidator(schema->Child(), depth + 1));
+            return std::make_unique<ListValidator>(CreateYsonCursorValidator(schema->Child(), depth + 1));
         }
         case ValueType::Tuple: {
             std::vector<std::unique_ptr<YsonCursorValidator>> children;
             for (const auto& child : schema->Children()) {
-                children.emplace_back(CreateCursorValidator(child->Schema, depth + 1));
+                children.emplace_back(CreateYsonCursorValidator(child->Schema, depth + 1));
             }
             return std::make_unique<TupleValidator>(std::move(children));
         }

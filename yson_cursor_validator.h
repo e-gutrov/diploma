@@ -15,6 +15,6 @@ public:
     virtual ~YsonCursorValidator() = default;
 };
 
-std::unique_ptr<YsonCursorValidator> CreateCursorValidator(const TypeBasePtr& schema, int depth = 0);
+std::unique_ptr<YsonCursorValidator> CreateYsonCursorValidator(const TypeBasePtr& schema, int depth = 0);
 
 #endif //COURSEWORK_YSON_CURSOR_VALIDATOR_H

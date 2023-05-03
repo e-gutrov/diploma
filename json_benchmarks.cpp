@@ -51,7 +51,7 @@ void benchJsonconsValidation(const std::string& data, const jsoncons::json& json
 }
 
 void benchJsonconsCursorValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
-    auto validator = CreateCursorValidator(type);
+    auto validator = CreateJsonconsCursorValidator(type);
     Timer t("poly cursor");
     int res = 0;
     for (int i = 0; i < iterations; ++i) {

@@ -8,12 +8,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_session.hpp>
 #include <llvm/Support/TargetSelect.h>
+//#include <util/stream/mem.h>
 
 #include "table_schema.h"
 #include "validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
 #include "jsoncons_cursor_validator.h"
+//#include "yson_cursor_validator.h"
 
 void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tests, const jsoncons::json& jsonSchema) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
@@ -26,7 +28,7 @@ void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tes
 }
 
 void testJsonconsCursorValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
-    auto validator = CreateCursorValidator(type);
+    auto validator = CreateJsonconsCursorValidator(type);
     for (const auto& [json, expected] : tests) {
         INFO("JSON is: " << json);
         jsoncons::json_cursor cursor(json);
@@ -69,6 +71,18 @@ void testLLVMValidation(const std::vector<std::pair<std::string, bool>>& tests, 
     }
 }
 
+void testYsonCursorValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
+//    auto validator = CreateYsonCursorValidator(type);
+//    for (const auto& [json, expected] : tests) {
+//        INFO("YSON is: " << json);
+//        TMemoryInput memoryInput(json);
+//        NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+//        NYT::NYson::TYsonPullParserCursor cursor(&parser);
+//        auto validationResult = validator->Validate(&cursor);
+//        CHECK(validationResult == expected);
+//    }
+}
+
 TEST_CASE("Test int") {
     auto type = CreateSimple(ValueType::Int);
     auto jsonSchema = GenerateJsonSchema(type);
@@ -108,6 +122,10 @@ TEST_CASE("Test int") {
 
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
+    }
+
+    SECTION("Test YSON cursor validator") {
+        testYsonCursorValidation(tests, type);
     }
 }
 
@@ -150,6 +168,10 @@ TEST_CASE("Test optional int") {
 
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
+    }
+
+    SECTION("Test YSON cursor validator") {
+        testYsonCursorValidation(tests, type);
     }
 }
 
@@ -195,6 +217,10 @@ TEST_CASE("Test list") {
 
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
+    }
+
+    SECTION("Test YSON cursor validator") {
+        testYsonCursorValidation(tests, type);
     }
 }
 
@@ -302,6 +328,10 @@ TEST_CASE("Test list of optional ints") {
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
     }
+
+    SECTION("Test YSON cursor validator") {
+        testYsonCursorValidation(tests, type);
+    }
 }
 
 TEST_CASE("Test tuple of string, int, and list of optional strings") {
@@ -351,6 +381,10 @@ TEST_CASE("Test tuple of string, int, and list of optional strings") {
 
     SECTION("Test generated LLVM IR schema validation") {
         testLLVMValidation(tests, type);
+    }
+
+    SECTION("Test YSON cursor validator") {
+        testYsonCursorValidation(tests, type);
     }
 }
 
