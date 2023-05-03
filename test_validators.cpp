@@ -7,7 +7,7 @@
 #include <rapidjson/schema.h>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_session.hpp>
-#include <llvm/Support/TargetSelect.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/TargetSelect.h>
 //#include <util/stream/mem.h>
 
 #include "table_schema.h"

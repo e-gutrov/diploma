@@ -1,0 +1,3 @@
+[submodule "include/ytsaurus"]
+	path = include/ytsaurus
+	url = git@github.com:e-gutrov/ytsaurus.git

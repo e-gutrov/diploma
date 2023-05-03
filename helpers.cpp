@@ -5,14 +5,14 @@
 #include <unordered_map>
 #include <iostream>
 
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
-#include <llvm-c/TargetMachine.h>
-#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/IRBuilder.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm-c/TargetMachine.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/LLJIT.h>
 
-#include <llvm/Transforms/IPO/PassManagerBuilder.h>
-#include <llvm/IR/LegacyPassManager.h>
-#include <llvm/IR/PassManager.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/Transforms/IPO/PassManagerBuilder.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/LegacyPassManager.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/PassManager.h>
 
 #include "helpers.h"
 #include "validators_llvm.h"

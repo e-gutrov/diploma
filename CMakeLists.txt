@@ -4,7 +4,7 @@ project(coursework)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-O2")
 
-include_directories(include ${PROJECT_SOURCE_DIR}/include/ytsaurus)
+include_directories(include ${PROJECT_SOURCE_DIR}/include/ytsaurus ${PROJECT_SOURCE_DIR}/include/ytsaurus/contrib/libs/llvm16/include)
 #include/ytsaurus/contrib/libs/cxxsupp/libcxx/include
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/ytsaurus/cmake/)
 add_subdirectory(include/ytsaurus)
@@ -51,31 +51,35 @@ add_executable(coursework
     jsoncons_cursor_validator.cpp
 )
 
-find_package(LLVM 16.0.0 REQUIRED CONFIG EXACT)
-
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-include_directories(${LLVM_INCLUDE_DIRS})
-separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-add_definitions(${LLVM_DEFINITIONS_LIST})
-
-# Find the libraries that correspond to the LLVM components
-# that we wish to use
-llvm_map_components_to_libnames(llvm_libs
-    support
-    core
-    irreader
-    orcjit
-    X86AsmParser
-    X86CodeGen
-    X86Desc
-    X86Disassembler
-    X86Info
-    ExecutionEngine)
+#llvm_map_components_to_libnames(llvm_libs
+#    support
+#    core
+#    irreader
+#    orcjit
+#    X86AsmParser
+#    X86CodeGen
+#    X86Desc
+#    X86Disassembler
+#    X86Info
+#    ExecutionEngine)
 
 # Link against LLVM libraries
-target_link_libraries(coursework ${llvm_libs})
+target_link_libraries(coursework PUBLIC
+#    ${llvm_libs}
+    llvm16-lib-IR
+    llvm16-lib-AsmParser
+    llvm16-lib-CodeGen
+    llvm16-lib-ExecutionEngine
+    lib-ExecutionEngine-MCJIT
+    llvm16-lib-IRReader
+    llvm16-lib-Linker
+    lib-Transforms-IPO
+    llvm16-lib-Support
+    llvm16-lib-Target
+    lib-Target-X86
+    Target-X86-AsmParser
+    llvm16-lib-Passes
+)
 
 
 # For tests
@@ -88,8 +92,50 @@ add_executable(tests
     helpers.cpp
     table_schema.cpp
     exceptions.cpp
-    jsoncons_cursor_validator.cpp)
-target_link_libraries(tests PRIVATE Catch2::Catch2 ${llvm_libs})
+    jsoncons_cursor_validator.cpp
+#    yson_cursor_validator.cpp
+)
+target_compile_options(tests PRIVATE
+    -Wdeprecated-this-capture
+)
+find_package(Python3 3.7 EXACT COMPONENTS Interpreter)
+target_link_libraries(tests PUBLIC
+        Catch2::Catch2
+        llvm16-lib-IR
+        llvm16-lib-AsmParser
+        llvm16-lib-CodeGen
+        llvm16-lib-ExecutionEngine
+        lib-ExecutionEngine-MCJIT
+        llvm16-lib-IRReader
+        llvm16-lib-Linker
+        lib-Transforms-IPO
+        llvm16-lib-Support
+        llvm16-lib-Target
+        lib-Target-X86
+        Target-X86-AsmParser
+        llvm16-lib-Passes
+#        contrib-libs-linux-headers
+#        contrib-libs-cxxsupp
+#        yutil
+    #    cpp-malloc-tcmalloc
+    #    libs-tcmalloc-no_percpu_cache
+    #    library-cpp-cpuid_check
+    #    cpp-mapreduce-interface
+    #    cpp-mapreduce-client
+)
+
+target_link_options(tests PRIVATE
+    -ldl
+    -lrt
+    -Wl,--no-as-needed
+    -fPIC
+    -fPIC
+    -lpthread
+    -lrt
+    -ldl
+    -lutil
+)
+vcs_info(tests)
 
 add_executable(json_benchmarks
     json_benchmarks.cpp
@@ -100,4 +146,17 @@ add_executable(json_benchmarks
     exceptions.cpp
     jsoncons_cursor_validator.cpp)
 
-target_link_libraries(json_benchmarks ${llvm_libs})
+target_link_libraries(json_benchmarks PUBLIC
+        llvm16-lib-IR
+        llvm16-lib-AsmParser
+        llvm16-lib-CodeGen
+        llvm16-lib-ExecutionEngine
+        lib-ExecutionEngine-MCJIT
+        llvm16-lib-IRReader
+        llvm16-lib-Linker
+        lib-Transforms-IPO
+        llvm16-lib-Support
+        llvm16-lib-Target
+        lib-Target-X86
+        Target-X86-AsmParser
+        llvm16-lib-Passes)

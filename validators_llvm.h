@@ -5,7 +5,7 @@
 #ifndef COURSEWORK_VALIDATORS_LLVM_H
 #define COURSEWORK_VALIDATORS_LLVM_H
 
-#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 #include <jsoncons/staj_cursor.hpp>
 
 #include "table_schema.h"
