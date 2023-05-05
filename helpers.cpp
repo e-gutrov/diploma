@@ -19,6 +19,20 @@
 
 using namespace llvm;
 
+std::string ConvertJsonToYson(const std::string& st) {
+    std::string result;
+    for (auto ch : st) {
+        auto ysonCharacter = ch;
+        if (ch == ',') {
+            ysonCharacter = ';';
+        } else if (ch == ':') {
+            ysonCharacter = '=';
+        }
+        result += ysonCharacter;
+    }
+    return result;
+}
+
 std::unordered_map<std::string, Function*> GenerateFunctionDeclarations(IRBuilder<>* builder, Module* module) {
 //    auto voidTy = builder->getVoidTy();
 //    auto sayHelloType = FunctionType::get(voidTy, false);
