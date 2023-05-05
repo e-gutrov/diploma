@@ -5,17 +5,18 @@
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/schema.h>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_session.hpp>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/TargetSelect.h>
-//#include <util/stream/mem.h>
+
+#include <Catch2/extras/catch_amalgamated.hpp>
+
+#include <util/stream/mem.h>
 
 #include "table_schema.h"
 #include "validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
 #include "jsoncons_cursor_validator.h"
-//#include "yson_cursor_validator.h"
+#include "yson_cursor_validator.h"
 
 void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tests, const jsoncons::json& jsonSchema) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
@@ -72,15 +73,16 @@ void testLLVMValidation(const std::vector<std::pair<std::string, bool>>& tests, 
 }
 
 void testYsonCursorValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
-//    auto validator = CreateYsonCursorValidator(type);
-//    for (const auto& [json, expected] : tests) {
-//        INFO("YSON is: " << json);
-//        TMemoryInput memoryInput(json);
-//        NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
-//        NYT::NYson::TYsonPullParserCursor cursor(&parser);
-//        auto validationResult = validator->Validate(&cursor);
-//        CHECK(validationResult == expected);
-//    }
+    auto validator = CreateYsonCursorValidator(type);
+    for (const auto& [json, expected] : tests) {
+        auto yson = ConvertJsonToYson(json);
+        INFO("YSON is: " << yson);
+        TMemoryInput memoryInput(yson);
+        NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+        NYT::NYson::TYsonPullParserCursor cursor(&parser);
+        auto validationResult = validator->Validate(&cursor);
+        CHECK(validationResult == expected);
+    }
 }
 
 TEST_CASE("Test int") {
