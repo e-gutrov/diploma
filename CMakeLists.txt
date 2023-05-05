@@ -5,9 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-O2")
 
 include_directories(include
-        ${PROJECT_SOURCE_DIR}/include/ytsaurus
-        ${PROJECT_SOURCE_DIR}/include/ytsaurus/contrib/libs/llvm16/include)
-#include/ytsaurus/contrib/libs/cxxsupp/libcxx/include
+    ${PROJECT_SOURCE_DIR}/include/ytsaurus
+    ${PROJECT_SOURCE_DIR}/include/ytsaurus/contrib/libs/llvm16/include
+)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/ytsaurus/cmake/)
 add_subdirectory(include/ytsaurus)
 add_executable(yson_coursework yson_main.cpp yson_cursor_validator.cpp table_schema.cpp exceptions.cpp)
@@ -16,19 +17,19 @@ target_compile_options(yson_coursework PRIVATE
 )
 find_package(Python3 3.7 EXACT COMPONENTS Interpreter)
 target_link_libraries(yson_coursework PUBLIC
-        llvm16-lib-IR
-        llvm16-lib-AsmParser
-        llvm16-lib-CodeGen
-        llvm16-lib-ExecutionEngine
-        lib-ExecutionEngine-MCJIT
-        llvm16-lib-IRReader
-        llvm16-lib-Linker
-        lib-Transforms-IPO
-        llvm16-lib-Support
-        llvm16-lib-Target
-        lib-Target-X86
-        Target-X86-AsmParser
-        llvm16-lib-Passes
+    llvm16-lib-IR
+    llvm16-lib-AsmParser
+    llvm16-lib-CodeGen
+    llvm16-lib-ExecutionEngine
+    lib-ExecutionEngine-MCJIT
+    llvm16-lib-IRReader
+    llvm16-lib-Linker
+    lib-Transforms-IPO
+    llvm16-lib-Support
+    llvm16-lib-Target
+    lib-Target-X86
+    Target-X86-AsmParser
+    llvm16-lib-Passes
 
     contrib-libs-linux-headers
     contrib-libs-cxxsupp
@@ -67,21 +68,7 @@ add_executable(coursework
     jsoncons_cursor_validator.cpp
 )
 
-#llvm_map_components_to_libnames(llvm_libs
-#    support
-#    core
-#    irreader
-#    orcjit
-#    X86AsmParser
-#    X86CodeGen
-#    X86Desc
-#    X86Disassembler
-#    X86Info
-#    ExecutionEngine)
-
-# Link against LLVM libraries
 target_link_libraries(coursework PUBLIC
-#    ${llvm_libs}
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen
@@ -114,27 +101,27 @@ target_compile_options(tests PRIVATE
 )
 find_package(Python3 3.7 EXACT COMPONENTS Interpreter)
 target_link_libraries(tests PUBLIC
-        llvm16-lib-IR
-        llvm16-lib-AsmParser
-        llvm16-lib-CodeGen
-        llvm16-lib-ExecutionEngine
-        lib-ExecutionEngine-MCJIT
-        llvm16-lib-IRReader
-        llvm16-lib-Linker
-        lib-Transforms-IPO
-        llvm16-lib-Support
-        llvm16-lib-Target
-        lib-Target-X86
-        Target-X86-AsmParser
-        llvm16-lib-Passes
-        contrib-libs-linux-headers
-        contrib-libs-cxxsupp
-        yutil
-        cpp-malloc-tcmalloc
-        libs-tcmalloc-no_percpu_cache
-        library-cpp-cpuid_check
-        cpp-mapreduce-interface
-        cpp-mapreduce-client
+    llvm16-lib-IR
+    llvm16-lib-AsmParser
+    llvm16-lib-CodeGen
+    llvm16-lib-ExecutionEngine
+    lib-ExecutionEngine-MCJIT
+    llvm16-lib-IRReader
+    llvm16-lib-Linker
+    lib-Transforms-IPO
+    llvm16-lib-Support
+    llvm16-lib-Target
+    lib-Target-X86
+    Target-X86-AsmParser
+    llvm16-lib-Passes
+    contrib-libs-linux-headers
+    contrib-libs-cxxsupp
+    yutil
+    cpp-malloc-tcmalloc
+    libs-tcmalloc-no_percpu_cache
+    library-cpp-cpuid_check
+    cpp-mapreduce-interface
+    cpp-mapreduce-client
 )
 
 target_link_options(tests PRIVATE
@@ -157,19 +144,21 @@ add_executable(json_benchmarks
     helpers.cpp
     table_schema.cpp
     exceptions.cpp
-    jsoncons_cursor_validator.cpp)
+    jsoncons_cursor_validator.cpp
+)
 
 target_link_libraries(json_benchmarks PUBLIC
-        llvm16-lib-IR
-        llvm16-lib-AsmParser
-        llvm16-lib-CodeGen
-        llvm16-lib-ExecutionEngine
-        lib-ExecutionEngine-MCJIT
-        llvm16-lib-IRReader
-        llvm16-lib-Linker
-        lib-Transforms-IPO
-        llvm16-lib-Support
-        llvm16-lib-Target
-        lib-Target-X86
-        Target-X86-AsmParser
-        llvm16-lib-Passes)
+    llvm16-lib-IR
+    llvm16-lib-AsmParser
+    llvm16-lib-CodeGen
+    llvm16-lib-ExecutionEngine
+    lib-ExecutionEngine-MCJIT
+    llvm16-lib-IRReader
+    llvm16-lib-Linker
+    lib-Transforms-IPO
+    llvm16-lib-Support
+    llvm16-lib-Target
+    lib-Target-X86
+    Target-X86-AsmParser
+    llvm16-lib-Passes
+)
