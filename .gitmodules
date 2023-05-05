@@ -1,3 +1,6 @@
 [submodule "include/ytsaurus"]
 	path = include/ytsaurus
-	url = https://github.com/savnadya/ytsaurus
+	url = git@github.com:e-gutrov/ytsaurus.git
+[submodule "include/Catch2"]
+	path = include/Catch2
+	url = git@github.com:catchorg/Catch2.git

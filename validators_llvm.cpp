@@ -3,9 +3,9 @@
 //
 
 #include <jsoncons/json_cursor.hpp>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IRReader/IRReader.h>
-#include <llvm/Support/SourceMgr.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/IRBuilder.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IRReader/IRReader.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/SourceMgr.h>
 
 #include "validators_llvm.h"
 #include "helpers.h"

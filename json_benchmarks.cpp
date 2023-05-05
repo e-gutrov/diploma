@@ -5,7 +5,7 @@
 
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
-#include <llvm/Support/TargetSelect.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/TargetSelect.h>
 
 #include "table_schema.h"
 #include "validators_llvm.h"

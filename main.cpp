@@ -8,21 +8,21 @@
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ExecutionEngine/Orc/CompileUtils.h"
-#include "llvm/ExecutionEngine/Orc/Core.h"
-#include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
-#include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
-#include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
-#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
-#include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/TargetSelect.h"
-#include <llvm/IR/IRBuilder.h>
-#include "llvm/ExecutionEngine/Orc/LLJIT.h"
-#include "llvm/ExecutionEngine/Orc/CompileUtils.h"
-#include <llvm/Support/TargetSelect.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ADT/StringRef.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/CompileUtils.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/Core.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/ExecutionUtils.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/IRCompileLayer.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/SectionMemoryManager.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/DataLayout.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/LLVMContext.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/TargetSelect.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/IRBuilder.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/CompileUtils.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/TargetSelect.h>
 
 #include <iostream>
 #include "validators_jsoncons.h"
