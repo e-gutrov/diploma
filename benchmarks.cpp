@@ -7,6 +7,8 @@
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/TargetSelect.h>
 
+#include <util/stream/mem.h>
+
 #include "table_schema.h"
 #include "validators_llvm.h"
 #include "validators_jsoncons.h"
@@ -14,6 +16,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/schema.h"
 #include "jsoncons_cursor_validator.h"
+#include "yson_cursor_validator.h"
 
 class Timer {
 public:
@@ -52,7 +55,7 @@ void benchJsonconsValidation(const std::string& data, const jsoncons::json& json
 
 void benchJsonconsCursorValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
     auto validator = CreateJsonconsCursorValidator(type);
-    Timer t("poly cursor");
+    Timer t("poly jsoncons cursor");
     int res = 0;
     for (int i = 0; i < iterations; ++i) {
         jsoncons::json_cursor cursor(data);
@@ -102,6 +105,19 @@ void benchLLVMValidation(const std::string& data, const TypeBasePtr& type, int i
     }
 }
 
+void benchYsonValidation(const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
+    auto validator = CreateYsonCursorValidator(type);
+    Timer t("poly YSON cursor");
+    int res = 0;
+    for (int i = 0; i < iterations; ++i) {
+        TMemoryInput memoryInput(data);
+        NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+        NYT::NYson::TYsonPullParserCursor cursor(&parser);
+        res += validator->Validate(&cursor);
+    }
+    std::cout << format << " YSON cursor, res = " << res << std::endl;
+}
+
 void runAllBenchmarks(
         const std::string& schemaName,
         const std::vector<std::pair<std::string, std::string>>& inputs,
@@ -116,6 +132,8 @@ void runAllBenchmarks(
         benchJsonconsCursorValidation(data, schema, iterations);
 //        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
         benchLLVMValidation(data, schema, iterations);
+        benchYsonValidation(ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary), schema, iterations, "binary");
+        benchYsonValidation(ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary), schema, iterations, "text");
         std::cout << "=====================\n";
     }
     std::cout << "\n\n";
@@ -217,13 +235,13 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-//    benchListOfInts(10000, 20000);
-//    benchListOfOptionalInts(10000, 10000);
-//    benchListOf5xOptionalInts(10000, 10000);
-//    benchListOfStrings(10000, 10000);
-//    benchListOfOptionalStrings(10000, 10000);
+    benchListOfInts(10000, 20000);
+    benchListOfOptionalInts(10000, 10000);
+    benchListOf5xOptionalInts(10000, 10000);
+    benchListOfStrings(10000, 10000);
+    benchListOfOptionalStrings(10000, 10000);
 
-//    benchListOfListOfOptionalListOfInts(1000, 10000);
+    benchListOfListOfOptionalListOfInts(1000, 10000);
     benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(10000, 10000);
     return 0;
 }

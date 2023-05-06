@@ -98,11 +98,11 @@ void DoConvertJsonToYson(NYson::TYsonWriter* writer, jsoncons::json_cursor* curs
     cursor->next();
 }
 
-std::string ConvertJsonToYson(const std::string& json) {
+std::string ConvertJsonToYson(const std::string& json, NYT::NYson::EYsonFormat format) {
     jsoncons::json_cursor cursor(json);
     TString result;
     TStringOutput out(result);
-    NYson::TYsonWriter writer(&out);
+    NYson::TYsonWriter writer(&out, format);
     DoConvertJsonToYson(&writer, &cursor);
     return std::string(result.data(), result.size());
 }

@@ -139,18 +139,20 @@ target_link_options(tests PRIVATE
 )
 vcs_info(tests)
 
-add_executable(json_benchmarks
-    json_benchmarks.cpp
+add_executable(benchmarks
+    benchmarks.cpp
     validators_jsoncons.cpp
     validators_llvm.cpp
     helpers.cpp
     table_schema.cpp
     exceptions.cpp
     jsoncons_cursor_validator.cpp
+    yson_cursor_validator.cpp
 )
 
-target_link_libraries(json_benchmarks PUBLIC
+target_link_libraries(benchmarks PUBLIC
     library-cpp-yson
+    yt-yt-core
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen
@@ -165,3 +167,4 @@ target_link_libraries(json_benchmarks PUBLIC
     Target-X86-AsmParser
     llvm16-lib-Passes
 )
+vcs_info(benchmarks)
