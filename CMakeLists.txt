@@ -69,6 +69,7 @@ add_executable(coursework
 )
 
 target_link_libraries(coursework PUBLIC
+    library-cpp-yson
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen
@@ -101,6 +102,7 @@ target_compile_options(tests PRIVATE
 )
 find_package(Python3 3.7 EXACT COMPONENTS Interpreter)
 target_link_libraries(tests PUBLIC
+    library-cpp-yson
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen
@@ -148,6 +150,7 @@ add_executable(json_benchmarks
 )
 
 target_link_libraries(json_benchmarks PUBLIC
+    library-cpp-yson
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen
