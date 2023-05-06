@@ -7,7 +7,7 @@
 #include <util/stream/mem.h>
 
 #include "table_schema.h"
-#include "validators_llvm.h"
+#include "json_validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
 #include "rapidjson/document.h"
@@ -82,7 +82,7 @@ void benchRapidJsonValidation(const std::string& data, const std::string& schema
 
 void benchLLVMValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
     auto jit = PrepareJit();
-    if (auto err = jit->addIRModule(CreateTableSchemaValidator(type))) {
+    if (auto err = jit->addIRModule(JsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }
     auto sym = jit->lookup("main");
@@ -91,8 +91,10 @@ void benchLLVMValidation(const std::string& data, const TypeBasePtr& type, int i
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
         int res = -1;
-        jsoncons::json_cursor cursor(data);
-        res += func(&cursor);
+        {
+            jsoncons::json_cursor cursor(data);
+            res += func(&cursor);
+        }
         Timer t("LLVM");
         for (int i = 0; i < iterations; ++i) {
             jsoncons::json_cursor cursor(data);

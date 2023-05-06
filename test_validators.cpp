@@ -9,7 +9,7 @@
 #include <util/stream/mem.h>
 
 #include "table_schema.h"
-#include "validators_llvm.h"
+#include "json_validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
 #include "jsoncons_cursor_validator.h"
@@ -53,7 +53,7 @@ void testRapidJsonValidation(const std::vector<std::pair<std::string, bool>>& te
 
 void testLLVMValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
     auto jit = PrepareJit();
-    if (auto err = jit->addIRModule(CreateTableSchemaValidator(type))) {
+    if (auto err = jit->addIRModule(JsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }
     auto sym = jit->lookup("main");

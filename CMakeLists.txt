@@ -61,8 +61,8 @@ add_executable(coursework
     table_schema.cpp
     exceptions.cpp
     exceptions.h
-    validators_llvm.cpp
-    validators_llvm.h
+    json_validators_llvm.cpp
+    json_validators_llvm.h
     helpers.cpp
     helpers.h
     jsoncons_cursor_validator.cpp
@@ -89,7 +89,7 @@ add_compile_definitions(CATCH_AMALGAMATED_CUSTOM_MAIN)
 add_executable(tests
     test_validators.cpp
     validators_jsoncons.cpp
-    validators_llvm.cpp
+    json_validators_llvm.cpp
     helpers.cpp
     table_schema.cpp
     exceptions.cpp
@@ -142,7 +142,7 @@ vcs_info(tests)
 add_executable(benchmarks
     benchmarks.cpp
     validators_jsoncons.cpp
-    validators_llvm.cpp
+    json_validators_llvm.cpp
     helpers.cpp
     table_schema.cpp
     exceptions.cpp

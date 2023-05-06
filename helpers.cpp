@@ -15,7 +15,7 @@
 #include <jsoncons/json.hpp>
 
 #include "helpers.h"
-#include "validators_llvm.h"
+#include "json_validators_llvm.h"
 
 using namespace llvm;
 

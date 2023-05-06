@@ -26,7 +26,7 @@
 
 #include <iostream>
 #include "validators_jsoncons.h"
-#include "validators_llvm.h"
+#include "json_validators_llvm.h"
 #include "helpers.h"
 
 void rapidjsonParsingExample() {
