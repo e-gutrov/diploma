@@ -8,6 +8,7 @@
 
 #include "table_schema.h"
 #include "json_validators_llvm.h"
+#include "yson_validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
 #include "rapidjson/document.h"
@@ -95,12 +96,12 @@ void benchJsonLlvmValidation(const std::string& data, const TypeBasePtr& type, i
             jsoncons::json_cursor cursor(data);
             res += func(&cursor);
         }
-        Timer t("LLVM");
+        Timer t("LLVM JSON");
         for (int i = 0; i < iterations; ++i) {
             jsoncons::json_cursor cursor(data);
             res += func(&cursor);
         }
-        std::cout << "LLVM, res = " << res << std::endl;
+        std::cout << "LLVM JSON, res = " << res << std::endl;
     }
 }
 
@@ -117,6 +118,34 @@ void benchYsonValidation(const std::string& data, const TypeBasePtr& type, int i
     std::cout << format << " YSON cursor, res = " << res << std::endl;
 }
 
+void benchYsonLlvmValidation(const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
+    auto jit = PrepareJit(UseProcessSymbols::ForYson);
+    if (auto err = jit->addIRModule(YsonValidators::CreateTableSchemaValidator(type))) {
+        std::cout << toString(std::move(err)) << std::endl;
+    }
+    auto sym = jit->lookup("main");
+    if (!sym) {
+        std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
+    } else {
+        auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
+        int res = -1;
+        {
+            TMemoryInput memoryInput(data);
+            NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+            NYT::NYson::TYsonPullParserCursor cursor(&parser);
+            res += func(&cursor);
+        }
+        Timer t("LLVM YSON");
+        for (int i = 0; i < iterations; ++i) {
+            TMemoryInput memoryInput(data);
+            NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+            NYT::NYson::TYsonPullParserCursor cursor(&parser);
+            res += func(&cursor);
+        }
+        std::cout << "LLVM YSON, res = " << res << std::endl;
+    }
+}
+
 void runAllBenchmarks(
         const std::string& schemaName,
         const std::vector<std::pair<std::string, std::string>>& inputs,
@@ -128,11 +157,13 @@ void runAllBenchmarks(
     for (const auto& [name, data] : inputs) {
         std::cout << name << "\n=====================\n";
 //        benchJsonconsValidation(data, jsonSchema, iterations);
-        benchJsonconsCursorValidation(data, schema, iterations);
+//        benchJsonconsCursorValidation(data, schema, iterations);
 //        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
-        benchJsonLlvmValidation(data, schema, iterations);
-        benchYsonValidation(ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary), schema, iterations, "binary");
-        benchYsonValidation(ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary), schema, iterations, "text");
+//        benchJsonLlvmValidation(data, schema, iterations);
+        auto ysonBinary = ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary);
+        benchYsonValidation(ysonBinary, schema, iterations, "binary");
+//        benchYsonValidation(yson, schema, iterations, "text");
+        benchYsonLlvmValidation(ysonBinary, schema, iterations, "binary");
         std::cout << "=====================\n";
     }
     std::cout << "\n\n";
