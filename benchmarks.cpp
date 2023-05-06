@@ -80,8 +80,8 @@ void benchRapidJsonValidation(const std::string& data, const std::string& schema
     std::cout << "RapidJSON, res = " << res << std::endl;
 }
 
-void benchLLVMValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
-    auto jit = PrepareJit();
+void benchJsonLlvmValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
+    auto jit = PrepareJit(UseProcessSymbols::None);
     if (auto err = jit->addIRModule(JsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }
@@ -130,7 +130,7 @@ void runAllBenchmarks(
 //        benchJsonconsValidation(data, jsonSchema, iterations);
         benchJsonconsCursorValidation(data, schema, iterations);
 //        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
-        benchLLVMValidation(data, schema, iterations);
+        benchJsonLlvmValidation(data, schema, iterations);
         benchYsonValidation(ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary), schema, iterations, "binary");
         benchYsonValidation(ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary), schema, iterations, "text");
         std::cout << "=====================\n";

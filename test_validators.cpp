@@ -53,7 +53,7 @@ void testRapidJsonValidation(const std::vector<std::pair<std::string, bool>>& te
 }
 
 void testJsonLlvmValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
-    auto jit = PrepareJit();
+    auto jit = PrepareJit(UseProcessSymbols::None);
     if (auto err = jit->addIRModule(JsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }
@@ -84,7 +84,7 @@ void testYsonCursorValidation(const std::vector<std::pair<std::string, bool>>& t
 }
 
 void testYsonLlvmValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
-    auto jit = PrepareJit();
+    auto jit = PrepareJit(UseProcessSymbols::ForYson);
     if (auto err = jit->addIRModule(YsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }

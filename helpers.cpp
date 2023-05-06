@@ -16,6 +16,7 @@
 
 #include "helpers.h"
 #include "json_validators_llvm.h"
+#include "yson_validators_llvm.h"
 
 using namespace llvm;
 
@@ -106,38 +107,52 @@ std::string ConvertJsonToYson(const std::string& json, NYT::NYson::EYsonFormat f
     return std::string(result.data(), result.size());
 }
 
-std::unordered_map<std::string, Function*> GenerateFunctionDeclarations(IRBuilder<>* builder, Module* module) {
-//    auto voidTy = builder->getVoidTy();
-//    auto sayHelloType = FunctionType::get(voidTy, false);
-//    auto sayHelloFunc = Function::Create(sayHelloType, Function::ExternalLinkage, "SayHello", module);
-//
-//    auto boolTy = builder->getInt1Ty();
-//    auto voidPtrTy = builder->getInt8PtrTy();
-//
-//    auto isDoneType = FunctionType::get(boolTy, {voidPtrTy}, false);
-//    auto isDoneFunc = Function::Create(isDoneType, Function::ExternalLinkage, "IsDone", module);
-//
-//    auto callNextType = FunctionType::get(voidTy, {voidPtrTy}, false);
-//    auto callNextFunc = Function::Create(callNextType, Function::ExternalLinkage, "CallNext", module);
-//
-//    auto validateIntType = FunctionType::get(boolTy, {voidPtrTy}, false);
-//    auto validateIntFunc = Function::Create(validateIntType, Function::ExternalLinkage, "ValidateInt", module);
-//
-//    auto isNullType = FunctionType::get(boolTy, {voidPtrTy}, false);
-//    auto isNullFunc =  Function::Create(isNullType, Function::ExternalLinkage, "IsNull", module);
-//
-//    auto isBeginArrayFunc = Function::Create(isNullType, Function::ExternalLinkage, "IsBeginArray", module);
-//    auto isEndArrayFunc = Function::Create(isNullType, Function::ExternalLinkage, "IsEndArray", module);
+std::unordered_map<std::string, Function*> GenerateFunctionDeclarations(IRBuilder<>* builder, Module* module, bool useExisting) {
+    if (useExisting) {
+        return {
+            {"IsDone", module->getFunction("IsDone")},
+            {"CallNext", module->getFunction("CallNext")},
+            {"ValidateInt", module->getFunction("ValidateInt")},
+            {"ValidateString", module->getFunction("ValidateString")},
+            {"IsNull", module->getFunction("IsNull")},
+            {"IsBeginArray", module->getFunction("IsBeginArray")},
+            {"IsEndArray", module->getFunction("IsEndArray")},
+        };
+    } else {
+        auto voidTy = builder->getVoidTy();
 
-    return {
-        {"IsDone", module->getFunction("IsDone")},
-        {"CallNext", module->getFunction("CallNext")},
-        {"ValidateInt", module->getFunction("ValidateInt")},
-        {"ValidateString", module->getFunction("ValidateString")},
-        {"IsNull", module->getFunction("IsNull")},
-        {"IsBeginArray", module->getFunction("IsBeginArray")},
-        {"IsEndArray", module->getFunction("IsEndArray")},
-    };
+        auto boolTy = builder->getInt1Ty();
+        auto voidPtrTy = builder->getInt8PtrTy();
+
+        auto isDoneType = FunctionType::get(boolTy, {voidPtrTy}, false);
+        auto isDoneFunc = Function::Create(isDoneType, Function::ExternalLinkage, "IsDone", module);
+
+        auto callNextType = FunctionType::get(voidTy, {voidPtrTy}, false);
+        auto callNextFunc = Function::Create(callNextType, Function::ExternalLinkage, "CallNext", module);
+
+        auto validateIntType = FunctionType::get(boolTy, {voidPtrTy}, false);
+        auto validateIntFunc = Function::Create(validateIntType, Function::ExternalLinkage, "ValidateInt", module);
+
+        auto validateStringType = FunctionType::get(boolTy, {voidPtrTy}, false);
+        auto validateStringFunc = Function::Create(validateIntType, Function::ExternalLinkage, "ValidateString", module);
+
+        // TODO: All these functions should probably be "ValidateX" and call Next() on cursor if there is an expected type
+        auto isNullType = FunctionType::get(boolTy, {voidPtrTy}, false);
+        auto isNullFunc =  Function::Create(isNullType, Function::ExternalLinkage, "IsNull", module);
+
+        auto isBeginArrayFunc = Function::Create(isNullType, Function::ExternalLinkage, "IsBeginArray", module);
+        auto isEndArrayFunc = Function::Create(isNullType, Function::ExternalLinkage, "IsEndArray", module);
+
+        return {
+            {"IsDone", isDoneFunc},
+            {"CallNext", callNextFunc},
+            {"ValidateInt", validateIntFunc},
+            {"ValidateString", validateStringFunc},
+            {"IsNull", isNullFunc},
+            {"IsBeginArray", isBeginArrayFunc},
+            {"IsEndArray", isEndArrayFunc},
+        };
+    }
 }
 
 llvm::Function* CreateTypeValidator(
@@ -294,7 +309,7 @@ orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique
     return {std::move(module), std::move(context)};
 }
 
-std::unique_ptr<orc::LLJIT> PrepareJit() {
+std::unique_ptr<orc::LLJIT> PrepareJit(UseProcessSymbols useProcessSymbols) {
     auto jitEx = orc::LLJITBuilder().create();
     if (!jitEx) {
         std::cerr << "no jit" << toString(jitEx.takeError()) << std::endl;
@@ -306,20 +321,38 @@ std::unique_ptr<orc::LLJIT> PrepareJit() {
     auto& JD = jit->getMainJITDylib();
     orc::MangleAndInterner Mangle(ES, DL);
 
-//    auto symbolMap = orc::SymbolMap{{
-//        {Mangle("SayHello"), JITEvaluatedSymbol(pointerToJITTargetAddress(&SayHello), JITSymbolFlags::Callable)},
-//        {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
-//        {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
-//        {Mangle("IsNull"), JITEvaluatedSymbol(pointerToJITTargetAddress(&IsType<jsoncons::staj_event_type::null_value>), JITSymbolFlags::Callable)},
-//        {Mangle("IsBeginArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&IsType<jsoncons::staj_event_type::begin_array>), JITSymbolFlags::Callable)},
-//        {Mangle("IsEndArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&IsType<jsoncons::staj_event_type::end_array>), JITSymbolFlags::Callable)},
-//        {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&CallNext), JITSymbolFlags::Callable)},
-//        {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&IsDone), JITSymbolFlags::Callable)},
-//    }};
-//
-//    if (auto err = JD.define(absoluteSymbols(symbolMap))) {
-//        std::cout << toString(std::move(err)) << std::endl;
-//    }
+    auto symbolMap = orc::SymbolMap{};
+    switch (useProcessSymbols) {
+        case UseProcessSymbols::ForJson: {
+            symbolMap = orc::SymbolMap{{
+                {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
+                {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
+                {Mangle("IsNull"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsType<jsoncons::staj_event_type::null_value>), JITSymbolFlags::Callable)},
+                {Mangle("IsBeginArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsType<jsoncons::staj_event_type::begin_array>), JITSymbolFlags::Callable)},
+                {Mangle("IsEndArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsType<jsoncons::staj_event_type::end_array>), JITSymbolFlags::Callable)},
+                {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::CallNext), JITSymbolFlags::Callable)},
+                {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsDone), JITSymbolFlags::Callable)},
+            }};
+            break;
+        }
+        case UseProcessSymbols::ForYson: {
+            symbolMap = orc::SymbolMap{{
+                {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
+                {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
+                {Mangle("IsNull"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EntityValue>), JITSymbolFlags::Callable)},
+                {Mangle("IsBeginArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::BeginList>), JITSymbolFlags::Callable)},
+                {Mangle("IsEndArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EndList>), JITSymbolFlags::Callable)},
+                {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::CallNext), JITSymbolFlags::Callable)},
+                {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsDone), JITSymbolFlags::Callable)},
+            }};
+            break;
+        }
+        case UseProcessSymbols::None: {}
+    }
+
+    if (auto err = JD.define(absoluteSymbols(symbolMap))) {
+        std::cout << toString(std::move(err)) << std::endl;
+    }
     JD.addGenerator(cantFail(llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
     return jit;
 }

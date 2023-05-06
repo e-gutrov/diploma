@@ -29,8 +29,9 @@ namespace YsonValidators {
         auto context = std::make_unique<llvm::LLVMContext>();
         llvm::IRBuilder<> builder(*context);
         llvm::SMDiagnostic err;
-        auto module = llvm::parseIRFile("/home/egor/CLionProjects/coursework/llvm-ir-helpers/llvm_yson_helpers.ll", err, *context);
-        auto functions = GenerateFunctionDeclarations(&builder, module.get());
+        auto module = std::make_unique<llvm::Module>("validating_module", *context);
+//        auto module = llvm::parseIRFile("/home/egor/CLionProjects/coursework/llvm-ir-helpers/llvm_yson_helpers.ll", err, *context);
+        auto functions = GenerateFunctionDeclarations(&builder, module.get(), false);
 
         auto validateRoot = CreateTypeValidator(schema, context.get(), &builder, module.get(), functions);
 

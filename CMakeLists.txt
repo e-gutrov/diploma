@@ -53,6 +53,7 @@ target_link_options(yson_coursework PRIVATE
 )
 vcs_info(yson_coursework)
 
+# TODO: remove headers
 add_executable(coursework
     main.cpp
     validators_jsoncons.cpp
@@ -66,10 +67,12 @@ add_executable(coursework
     helpers.cpp
     helpers.h
     jsoncons_cursor_validator.cpp
+    yson_validators_llvm.cpp
 )
 
 target_link_libraries(coursework PUBLIC
     library-cpp-yson
+    yt-yt-core
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen
@@ -84,6 +87,7 @@ target_link_libraries(coursework PUBLIC
     Target-X86-AsmParser
     llvm16-lib-Passes
 )
+vcs_info(coursework)
 
 add_compile_definitions(CATCH_AMALGAMATED_CUSTOM_MAIN)
 add_executable(tests
@@ -149,6 +153,7 @@ add_executable(benchmarks
     exceptions.cpp
     jsoncons_cursor_validator.cpp
     yson_cursor_validator.cpp
+    yson_validators_llvm.cpp
 )
 
 target_link_libraries(benchmarks PUBLIC

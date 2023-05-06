@@ -18,10 +18,16 @@ llvm::Function* CreateTypeValidator(
     const std::unordered_map<std::string, llvm::Function*>& functions,
     const std::string& suffix = "");
 
-std::unordered_map<std::string, llvm::Function*> GenerateFunctionDeclarations(llvm::IRBuilder<>* builder, llvm::Module* module);
+std::unordered_map<std::string, llvm::Function*> GenerateFunctionDeclarations(llvm::IRBuilder<>* builder, llvm::Module* module, bool useExisting);
 
 llvm::orc::ThreadSafeModule FinalizeModule(std::unique_ptr<llvm::Module> module, std::unique_ptr<llvm::LLVMContext> context);
 
-std::unique_ptr<llvm::orc::LLJIT> PrepareJit();
+enum class UseProcessSymbols {
+    None,
+    ForJson,
+    ForYson,
+};
+
+std::unique_ptr<llvm::orc::LLJIT> PrepareJit(UseProcessSymbols);
 
 #endif //COURSEWORK_HELPERS_H

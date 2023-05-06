@@ -31,7 +31,7 @@ namespace JsonValidators {
         llvm::IRBuilder<> builder(*context);
         llvm::SMDiagnostic err;
         auto module = llvm::parseIRFile("/home/egor/CLionProjects/coursework/llvm-ir-helpers/llvm_jsoncons_helpers.ll", err, *context);
-        auto functions = GenerateFunctionDeclarations(&builder, module.get());
+        auto functions = GenerateFunctionDeclarations(&builder, module.get(), true);
 
         auto validateRoot = CreateTypeValidator(schema, context.get(), &builder, module.get(), functions);
 
