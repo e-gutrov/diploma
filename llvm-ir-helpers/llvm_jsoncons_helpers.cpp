@@ -1,7 +1,3 @@
-//
-// Created by egor on 23/04/23.
-//
-
 #include <jsoncons/json_cursor.hpp>
 
 using namespace jsoncons;
@@ -27,7 +23,7 @@ extern "C" void CallNext(void* ptr) {
 
 extern "C" bool ValidateInt(void* ptr) {
     auto eventType = GetCurrentType(ptr);
-    auto cursor = reinterpret_cast<jsoncons::json_cursor*>(ptr);;
+    auto cursor = reinterpret_cast<jsoncons::json_cursor*>(ptr);
     cursor->next();
     return eventType == jsoncons::staj_event_type::uint64_value || eventType == jsoncons::staj_event_type::int64_value;
 }
