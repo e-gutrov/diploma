@@ -19,79 +19,82 @@
 
 using namespace llvm;
 
-void DoConvertJsonToYson(NYson::TYsonWriter* writer, jsoncons::json_cursor* cursor);
+namespace {
 
-void DoConvertJsonListToYson(NYson::TYsonWriter* writer, jsoncons::json_cursor* cursor) {
-    while (cursor->current().event_type() != jsoncons::staj_event_type::end_array) {
-        writer->OnListItem();
-        DoConvertJsonToYson(writer, cursor);
+    void DoConvertJsonToYson(NYson::TYsonWriter *writer, jsoncons::json_cursor *cursor);
+
+    void DoConvertJsonListToYson(NYson::TYsonWriter *writer, jsoncons::json_cursor *cursor) {
+        while (cursor->current().event_type() != jsoncons::staj_event_type::end_array) {
+            writer->OnListItem();
+            DoConvertJsonToYson(writer, cursor);
+        }
     }
-}
 
-void DoConvertJsonMapToYson(NYson::TYsonWriter* writer, jsoncons::json_cursor* cursor) {
-    while (cursor->current().event_type() != jsoncons::staj_event_type::end_object) {
-        auto key = cursor->current().get<std::string>();
-        writer->OnKeyedItem(key);
+    void DoConvertJsonMapToYson(NYson::TYsonWriter *writer, jsoncons::json_cursor *cursor) {
+        while (cursor->current().event_type() != jsoncons::staj_event_type::end_object) {
+            auto key = cursor->current().get<std::string>();
+            writer->OnKeyedItem(key);
+            cursor->next();
+            DoConvertJsonToYson(writer, cursor);
+        }
+    }
+
+    void DoConvertJsonToYson(NYson::TYsonWriter *writer, jsoncons::json_cursor *cursor) {
+        const auto &event = cursor->current();
+        switch (event.event_type()) {
+            case jsoncons::staj_event_type::begin_array: {
+                writer->OnBeginList();
+                cursor->next();
+
+                DoConvertJsonListToYson(writer, cursor);
+
+                writer->OnEndList();
+                cursor->next();
+                return;
+            }
+            case jsoncons::staj_event_type::begin_object: {
+                writer->OnBeginMap();
+                cursor->next();
+
+                DoConvertJsonMapToYson(writer, cursor);
+
+                writer->OnEndMap();
+                cursor->next();
+                return;
+            }
+            case jsoncons::staj_event_type::null_value: {
+                writer->OnEntity();
+                break;
+            }
+            case jsoncons::staj_event_type::uint64_value: {
+                writer->OnUint64Scalar(event.get<std::uint64_t>());
+                break;
+            }
+            case jsoncons::staj_event_type::int64_value: {
+                writer->OnInt64Scalar(event.get<std::int64_t>());
+                break;
+            }
+            case jsoncons::staj_event_type::bool_value: {
+                writer->OnBooleanScalar(event.get<bool>());
+                break;
+            }
+            case jsoncons::staj_event_type::double_value:
+            case jsoncons::staj_event_type::half_value: {
+                writer->OnDoubleScalar(event.get<double>());
+                break;
+            }
+            case jsoncons::staj_event_type::string_value: {
+                writer->OnStringScalar(event.get<std::string>());
+                break;
+            }
+            case jsoncons::staj_event_type::end_array:
+            case jsoncons::staj_event_type::end_object:
+            case jsoncons::staj_event_type::key:
+            case jsoncons::staj_event_type::byte_string_value:
+                assert(0);
+        }
         cursor->next();
-        DoConvertJsonToYson(writer, cursor);
     }
-}
-
-void DoConvertJsonToYson(NYson::TYsonWriter* writer, jsoncons::json_cursor* cursor) {
-    const auto& event = cursor->current();
-    switch (event.event_type()) {
-        case jsoncons::staj_event_type::begin_array: {
-            writer->OnBeginList();
-            cursor->next();
-
-            DoConvertJsonListToYson(writer, cursor);
-
-            writer->OnEndList();
-            cursor->next();
-            return;
-        }
-        case jsoncons::staj_event_type::begin_object: {
-            writer->OnBeginMap();
-            cursor->next();
-
-            DoConvertJsonMapToYson(writer, cursor);
-
-            writer->OnEndMap();
-            cursor->next();
-            return;
-        }
-        case jsoncons::staj_event_type::null_value: {
-            writer->OnEntity();
-            break;
-        }
-        case jsoncons::staj_event_type::uint64_value: {
-            writer->OnUint64Scalar(event.get<std::uint64_t>());
-            break;
-        }
-        case jsoncons::staj_event_type::int64_value: {
-            writer->OnInt64Scalar(event.get<std::int64_t>());
-            break;
-        }
-        case jsoncons::staj_event_type::bool_value: {
-            writer->OnBooleanScalar(event.get<bool>());
-            break;
-        }
-        case jsoncons::staj_event_type::double_value:
-        case jsoncons::staj_event_type::half_value: {
-            writer->OnDoubleScalar(event.get<double>());
-            break;
-        }
-        case jsoncons::staj_event_type::string_value: {
-            writer->OnStringScalar(event.get<std::string>());
-            break;
-        }
-        case jsoncons::staj_event_type::end_array:
-        case jsoncons::staj_event_type::end_object:
-        case jsoncons::staj_event_type::key:
-        case jsoncons::staj_event_type::byte_string_value:
-            assert(0);
-    }
-    cursor->next();
 }
 
 std::string ConvertJsonToYson(const std::string& json, NYT::NYson::EYsonFormat format) {
