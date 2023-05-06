@@ -95,6 +95,7 @@ add_executable(tests
     exceptions.cpp
     jsoncons_cursor_validator.cpp
     yson_cursor_validator.cpp
+    yson_validators_llvm.cpp
     ${PROJECT_SOURCE_DIR}/include/Catch2/extras/catch_amalgamated.cpp
 )
 target_compile_options(tests PRIVATE

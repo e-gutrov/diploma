@@ -10,6 +10,7 @@
 
 #include "table_schema.h"
 #include "json_validators_llvm.h"
+#include "yson_validators_llvm.h"
 #include "validators_jsoncons.h"
 #include "helpers.h"
 #include "jsoncons_cursor_validator.h"
@@ -51,7 +52,7 @@ void testRapidJsonValidation(const std::vector<std::pair<std::string, bool>>& te
     }
 }
 
-void testLLVMValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
+void testJsonLlvmValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
     auto jit = PrepareJit();
     if (auto err = jit->addIRModule(JsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
@@ -79,6 +80,27 @@ void testYsonCursorValidation(const std::vector<std::pair<std::string, bool>>& t
         NYT::NYson::TYsonPullParserCursor cursor(&parser);
         auto validationResult = validator->Validate(&cursor);
         CHECK(validationResult == expected);
+    }
+}
+
+void testYsonLlvmValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
+    auto jit = PrepareJit();
+    if (auto err = jit->addIRModule(YsonValidators::CreateTableSchemaValidator(type))) {
+        std::cout << toString(std::move(err)) << std::endl;
+    }
+    auto sym = jit->lookup("main");
+    if (!sym) {
+        std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
+    } else {
+        auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
+        for (const auto& [json, expected] : tests) {
+            auto yson = ConvertJsonToYson(json);
+            INFO("YSON is: " << yson);
+            TMemoryInput memoryInput(yson);
+            NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+            NYT::NYson::TYsonPullParserCursor cursor(&parser);
+            CHECK(func(&cursor) == expected);
+        }
     }
 }
 
@@ -119,12 +141,16 @@ TEST_CASE("Test int") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
-    SECTION("Test generated LLVM IR schema validation") {
-        testLLVMValidation(tests, type);
+    SECTION("Test JSON LLVM validation") {
+        testJsonLlvmValidation(tests, type);
     }
 
     SECTION("Test YSON cursor validator") {
         testYsonCursorValidation(tests, type);
+    }
+
+    SECTION("Test YSON LLVM validation") {
+        testYsonLlvmValidation(tests, type);
     }
 }
 
@@ -165,12 +191,16 @@ TEST_CASE("Test optional int") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
-    SECTION("Test generated LLVM IR schema validation") {
-        testLLVMValidation(tests, type);
+    SECTION("Test JSON LLVM validation") {
+        testJsonLlvmValidation(tests, type);
     }
 
     SECTION("Test YSON cursor validator") {
         testYsonCursorValidation(tests, type);
+    }
+
+    SECTION("Test YSON LLVM validation") {
+        testYsonLlvmValidation(tests, type);
     }
 }
 
@@ -214,12 +244,16 @@ TEST_CASE("Test list") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
-    SECTION("Test generated LLVM IR schema validation") {
-        testLLVMValidation(tests, type);
+    SECTION("Test JSON LLVM validation") {
+        testJsonLlvmValidation(tests, type);
     }
 
     SECTION("Test YSON cursor validator") {
         testYsonCursorValidation(tests, type);
+    }
+
+    SECTION("Test YSON LLVM validation") {
+        testYsonLlvmValidation(tests, type);
     }
 }
 
@@ -278,8 +312,16 @@ TEST_CASE("Test object with optional string and required int fields") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
-    SECTION("Test generated LLVM IR schema validation") {
-//        testLLVMValidation(tests, type);
+    SECTION("Test JSON LLVM validation") {
+//        testJsonLlvmValidation(tests, type);
+    }
+
+    SECTION("Test YSON cursor validator") {
+//        testYsonCursorValidation(tests, type);
+    }
+
+    SECTION("Test YSON LLVM validation") {
+//        testYsonLlvmValidation(tests, type);
     }
 }
 
@@ -324,12 +366,16 @@ TEST_CASE("Test list of optional ints") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
-    SECTION("Test generated LLVM IR schema validation") {
-        testLLVMValidation(tests, type);
+    SECTION("Test JSON LLVM validation") {
+        testJsonLlvmValidation(tests, type);
     }
 
     SECTION("Test YSON cursor validator") {
         testYsonCursorValidation(tests, type);
+    }
+
+    SECTION("Test YSON LLVM validation") {
+        testYsonLlvmValidation(tests, type);
     }
 }
 
@@ -378,12 +424,16 @@ TEST_CASE("Test tuple of string, int, and list of optional strings") {
         testRapidJsonValidation(tests, jsonSchema.to_string());
     }
 
-    SECTION("Test generated LLVM IR schema validation") {
-        testLLVMValidation(tests, type);
+    SECTION("Test JSON LLVM validation") {
+        testJsonLlvmValidation(tests, type);
     }
 
     SECTION("Test YSON cursor validator") {
         testYsonCursorValidation(tests, type);
+    }
+
+    SECTION("Test YSON LLVM validation") {
+        testYsonLlvmValidation(tests, type);
     }
 }
 
