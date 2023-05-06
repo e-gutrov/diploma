@@ -9,17 +9,14 @@
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm-c/TargetMachine.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/LLJIT.h>
-
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/LegacyPassManager.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/PassManager.h>
 
-#include <jsoncons/json.hpp>
-
-// https://github.com/ytsaurus/ytsaurus/blob/21b20c202741b5156eac6d9e124828876c386f3a/library/cpp/yson/node/node_builder.h
-//https://github.com/ytsaurus/ytsaurus/blob/21b20c202741b5156eac6d9e124828876c386f3a/library/cpp/yson/writer.h
 #include <ytsaurus/library/cpp/yson/writer.h>
 #include <ytsaurus/util/stream/str.h>
+
+#include <jsoncons/json.hpp>
 
 #include "helpers.h"
 #include "validators_llvm.h"
