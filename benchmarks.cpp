@@ -1,6 +1,3 @@
-//
-// Created by egor on 25/04/23.
-//
 #include <chrono>
 
 #include <jsoncons/json.hpp>

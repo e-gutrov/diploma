@@ -1,7 +1,3 @@
-//
-// Created by egor on 16/04/23.
-//
-
 #ifndef COURSEWORK_VALIDATORS_JSONCONS_H
 #define COURSEWORK_VALIDATORS_JSONCONS_H
 

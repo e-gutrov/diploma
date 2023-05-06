@@ -1,7 +1,3 @@
-//
-// Created by egor on 23/04/23.
-//
-
 #include <jsoncons/json_cursor.hpp>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/IRBuilder.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IRReader/IRReader.h>
@@ -16,31 +12,20 @@ json_cursor* toJsonCursor(void* ptr) {
     return reinterpret_cast<json_cursor*>(ptr);
 }
 
-//void debugPrint(const std::string& funcName, json_cursor* cursor) {
-//    std::cerr << "debugPrint called, " << funcName << " " << cursor->current().event_type() << std::endl;
-//}
-
 bool IsDone(void* ptr) {
     auto cursor = toJsonCursor(ptr);
-//    debugPrint("isDone", cursor);
     return cursor->done();
 }
 
 staj_event_type GetCurrentType(void* ptr) {
     auto cursor = toJsonCursor(ptr);
-//    debugPrint("GetCurrentType", cursor);
     return cursor->current().event_type();
 }
 
 void CallNext(void* ptr) {
     auto cursor = toJsonCursor(ptr);
-//    debugPrint("CallNext", cursor);
     cursor->next();
 }
-
-// TODO: in case of structs, map each field name to a number and lookup it in a map with an external function?
-// based on the index, call the needed function (ptrs will be stored in an array?) and mark the field used
-// Check that all required fields are met
 
 llvm::Function* DoCreateTypeValidator(
     const TypeBasePtr& schema,
@@ -162,8 +147,9 @@ llvm::Function* DoCreateTypeValidator(
             return func;
         }
         case ValueType::Object: {
-            // auto children
-            // TODO
+            // TODO: in case of structs, map each field name to a number and lookup it in a map with an external function?
+            // based on the index, call the needed function (ptrs will be stored in an array?) and mark the field used
+            // Check that all required fields are met
             assert(0);
         }
         default:

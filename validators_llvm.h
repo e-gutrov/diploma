@@ -1,7 +1,3 @@
-//
-// Created by egor on 23/04/23.
-//
-
 #ifndef COURSEWORK_VALIDATORS_LLVM_H
 #define COURSEWORK_VALIDATORS_LLVM_H
 
@@ -10,8 +6,6 @@
 
 #include "table_schema.h"
 
-
-void SayHello();
 
 jsoncons::staj_event_type GetCurrentType(void* ptr);
 bool IsDone(void* ptr);

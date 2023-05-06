@@ -1,7 +1,3 @@
-//
-// Created by egor on 16/04/23.
-//
-
 #include "validators_jsoncons.h"
 
 #include <jsoncons/json_cursor.hpp>

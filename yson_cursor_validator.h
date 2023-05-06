@@ -1,7 +1,3 @@
-//
-// Created by egor on 01/05/23.
-//
-
 #ifndef COURSEWORK_YSON_CURSOR_VALIDATOR_H
 #define COURSEWORK_YSON_CURSOR_VALIDATOR_H
 

@@ -1,6 +1,3 @@
-//
-// Created by egor on 20/04/23.
-//
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <rapidjson/document.h>

@@ -1,7 +1,3 @@
-//
-// Created by egor on 19/04/23.
-//
-
 #ifndef COURSEWORK_TABLE_SCHEMA_H
 #define COURSEWORK_TABLE_SCHEMA_H
 

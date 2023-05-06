@@ -1,7 +1,3 @@
-//
-// Created by egor on 25/04/23.
-//
-
 #include "jsoncons_cursor_validator.h"
 #include "table_schema.h"
 
