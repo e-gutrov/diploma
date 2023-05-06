@@ -6,7 +6,17 @@
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/IRBuilder.h>
 
+#include "table_schema.h"
+
 std::string ConvertJsonToYson(const std::string&, NYT::NYson::EYsonFormat format = NYT::NYson::EYsonFormat::Binary);
+
+llvm::Function* CreateTypeValidator(
+    const TypeBasePtr& schema,
+    llvm::LLVMContext* context,
+    llvm::IRBuilder<>* builder,
+    llvm::Module* module,
+    const std::unordered_map<std::string, llvm::Function*>& functions,
+    const std::string& suffix = "");
 
 std::unordered_map<std::string, llvm::Function*> GenerateFunctionDeclarations(llvm::IRBuilder<>* builder, llvm::Module* module);
 
