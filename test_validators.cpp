@@ -104,6 +104,42 @@ void testYsonLlvmValidation(const std::vector<std::pair<std::string, bool>>& tes
     }
 }
 
+// TODO: move to another file
+
+TEST_CASE("Test JSON to YSON text conversion") {
+    auto format = NYT::NYson::EYsonFormat::Text;
+    SECTION("Test list of optional ints") {
+        auto json = "[1, null, null, 4]";
+        auto yson = ConvertJsonToYson(json, format);
+        auto expected = "[1u;#;#;4u]";
+        REQUIRE(yson == expected);
+    }
+
+    SECTION("Test map from string to int") {
+        auto json = R"({"name": "Ivan", "surname": "Kekov"})";
+        auto yson = ConvertJsonToYson(json, format);
+        auto expected = R"({"name"="Ivan";"surname"="Kekov"})";
+        REQUIRE(yson == expected);
+    }
+}
+
+TEST_CASE("Test JSON to YSON binary conversion") {
+    auto format = NYT::NYson::EYsonFormat::Binary;
+    SECTION("Test list of optional ints") {
+        auto json = "[1, null, null, 4]";
+        auto yson = ConvertJsonToYson(json, format);
+        auto expected = "[\x06\x01;#;#;\x06\x04]";
+        REQUIRE(yson == expected);
+    }
+
+    SECTION("Test map from string to int") {
+        auto json = R"({"name": "Ivan", "surname": "Kekov"})";
+        auto yson = ConvertJsonToYson(json, format);
+        auto expected = "{\x01\x08name=\x01\x08Ivan;\x01\x0esurname=\x01\x0aKekov}";
+        REQUIRE(yson == expected);
+    }
+}
+
 TEST_CASE("Test int") {
     auto type = CreateSimple(ValueType::Int);
     auto jsonSchema = GenerateJsonSchema(type);
