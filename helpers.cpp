@@ -289,14 +289,14 @@ orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique
     std::string triple = LLVMGetDefaultTargetTriple();
     module->setTargetTriple(triple);
     llvm::PassManagerBuilder PMBuilder;
-    //    PMBuilder.OptLevel = 2;
-    //    llvm::legacy::FunctionPassManager FPM(module.get());
-    //    PMBuilder.populateFunctionPassManager(FPM);
-    //    FPM.doInitialization();
-    //    for (Function &F : *module) {
-    //        FPM.run(F);
-    //    }
-    //    FPM.doFinalization();
+    PMBuilder.OptLevel = 2;
+    llvm::legacy::FunctionPassManager FPM(module.get());
+    PMBuilder.populateFunctionPassManager(FPM);
+    FPM.doInitialization();
+    for (Function &F : *module) {
+        FPM.run(F);
+    }
+    FPM.doFinalization();
 
     // TODO: figure out
     // Optionally, run module-level optimization passes.
