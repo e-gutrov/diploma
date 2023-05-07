@@ -27,7 +27,7 @@ public:
     }
 
     void PrintElapsed(const std::string& s) const {
-        std::cout << s << ", elapsed \t" << SecondsElapsed() << std::endl;
+        std::cout << s << ',' << SecondsElapsed() << std::endl;
     }
 
     ~Timer() {
@@ -48,7 +48,6 @@ void benchJsonconsValidation(const std::string& data, const jsoncons::json& json
     for (int i = 0; i < iterations; ++i) {
         res += validator.is_valid(jsonObj);
     }
-    std::cout << "jsoncons, res = " << res << std::endl;
 }
 
 void benchJsonconsCursorValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
@@ -59,7 +58,6 @@ void benchJsonconsCursorValidation(const std::string& data, const TypeBasePtr& t
         jsoncons::json_cursor cursor(data);
         res += validator->Validate(&cursor);
     }
-    std::cout << "jsoncons cursor, res = " << res << std::endl;
 }
 
 void benchRapidJsonValidation(const std::string& data, const std::string& schemaStr, int iterations) {
@@ -78,7 +76,6 @@ void benchRapidJsonValidation(const std::string& data, const std::string& schema
         res += validator.IsValid();
         validator.Reset();
     }
-    std::cout << "RapidJSON, res = " << res << std::endl;
 }
 
 void benchJsonLlvmValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
@@ -101,7 +98,6 @@ void benchJsonLlvmValidation(const std::string& data, const TypeBasePtr& type, i
             jsoncons::json_cursor cursor(data);
             res += func(&cursor);
         }
-        std::cout << "LLVM JSON, res = " << res << std::endl;
     }
 }
 
@@ -115,7 +111,6 @@ void benchYsonValidation(const std::string& data, const TypeBasePtr& type, int i
         NYT::NYson::TYsonPullParserCursor cursor(&parser);
         res += validator->Validate(&cursor);
     }
-    std::cout << format << " YSON cursor, res = " << res << std::endl;
 }
 
 void benchYsonLlvmValidation(const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
@@ -142,7 +137,6 @@ void benchYsonLlvmValidation(const std::string& data, const TypeBasePtr& type, i
             NYT::NYson::TYsonPullParserCursor cursor(&parser);
             res += func(&cursor);
         }
-        std::cout << "LLVM YSON, res = " << res << std::endl;
     }
 }
 
