@@ -155,7 +155,7 @@ void runAllBenchmarks(
 //        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
 //        benchJsonLlvmValidation(data, schema, iterations);
         auto ysonBinary = ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary);
-        benchYsonValidation(ysonBinary, schema, iterations, "binary");
+//        benchYsonValidation(ysonBinary, schema, iterations, "binary");
 //        benchYsonValidation(yson, schema, iterations, "text");
         benchYsonLlvmValidation(ysonBinary, schema, iterations, "binary");
         std::cout << "=====================\n";
@@ -259,13 +259,13 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    benchListOfInts(10000, 20000);
-    benchListOfOptionalInts(10000, 10000);
-    benchListOf5xOptionalInts(10000, 10000);
-    benchListOfStrings(10000, 10000);
-    benchListOfOptionalStrings(10000, 10000);
+    benchListOfInts(10000, 200000);
+    benchListOfOptionalInts(10000, 80000);
+    benchListOf5xOptionalInts(10000, 100000);
+    benchListOfStrings(10000, 100000);
+    benchListOfOptionalStrings(10000, 100000);
 
-    benchListOfListOfOptionalListOfInts(1000, 10000);
+    benchListOfListOfOptionalListOfInts(1000, 100000);
     benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(10000, 10000);
     return 0;
 }
