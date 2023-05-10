@@ -18,13 +18,13 @@ declare dso_local void @_ZNSt8ios_base4InitD1Ev(%"class.std::ios_base::Init"* no
 ; Function Attrs: nofree nounwind
 declare dso_local i32 @__cxa_atexit(void (i8*)*, i8*, i8*) local_unnamed_addr #2
 
-; Function Attrs: norecurse nounwind readnone uwtable willreturn mustprogress
+; Function Attrs: alwaysinline norecurse nounwind readnone uwtable willreturn mustprogress
 define dso_local %"class.jsoncons::basic_json_cursor"* @toJsonCursor(i8* readnone %0) local_unnamed_addr #3 {
   %2 = bitcast i8* %0 to %"class.jsoncons::basic_json_cursor"*
   ret %"class.jsoncons::basic_json_cursor"* %2
 }
 
-; Function Attrs: norecurse nounwind readonly uwtable willreturn mustprogress
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
 define dso_local signext i8 @GetCurrentType(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
   %3 = load i32, i32* %1, align 4, !tbaa !2
   %4 = sext i32 %3 to i64
@@ -33,7 +33,7 @@ define dso_local signext i8 @GetCurrentType(i8* nocapture readonly %0, i32* noca
   ret i8 %6
 }
 
-; Function Attrs: uwtable mustprogress
+; Function Attrs: alwaysinline uwtable mustprogress
 define dso_local void @CallNext(i8* %0, i32* nocapture %1, i32* nocapture %2, i32 %3, i8* %4) local_unnamed_addr #5 {
   %6 = load i32, i32* %1, align 4, !tbaa !2
   %7 = add nsw i32 %6, 1
@@ -54,7 +54,7 @@ define dso_local void @CallNext(i8* %0, i32* nocapture %1, i32* nocapture %2, i3
 
 declare dso_local i32 @FillWithEvents(i8*, i32, i8*) local_unnamed_addr #0
 
-; Function Attrs: norecurse nounwind readonly uwtable willreturn mustprogress
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
 define dso_local zeroext i1 @IsDone(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
   %3 = load i32, i32* %1, align 4, !tbaa !2
   %4 = sext i32 %3 to i64
@@ -64,7 +64,7 @@ define dso_local zeroext i1 @IsDone(i8* nocapture readonly %0, i32* nocapture re
   ret i1 %7
 }
 
-; Function Attrs: uwtable mustprogress
+; Function Attrs: alwaysinline uwtable mustprogress
 define dso_local zeroext i1 @ValidateInt(i8* %0, i32* nocapture %1, i32* nocapture %2, i32 %3, i8* %4) local_unnamed_addr #5 {
   %6 = load i32, i32* %1, align 4, !tbaa !2
   %7 = sext i32 %6 to i64
@@ -88,7 +88,7 @@ define dso_local zeroext i1 @ValidateInt(i8* %0, i32* nocapture %1, i32* nocaptu
   ret i1 %17
 }
 
-; Function Attrs: uwtable mustprogress
+; Function Attrs: alwaysinline uwtable mustprogress
 define dso_local zeroext i1 @ValidateString(i8* %0, i32* nocapture %1, i32* nocapture %2, i32 %3, i8* %4) local_unnamed_addr #5 {
   %6 = load i32, i32* %1, align 4, !tbaa !2
   %7 = sext i32 %6 to i64
@@ -112,7 +112,7 @@ define dso_local zeroext i1 @ValidateString(i8* %0, i32* nocapture %1, i32* noca
   ret i1 %17
 }
 
-; Function Attrs: norecurse nounwind readonly uwtable willreturn mustprogress
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
 define dso_local zeroext i1 @IsBeginArray(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
   %3 = load i32, i32* %1, align 4, !tbaa !2
   %4 = sext i32 %3 to i64
@@ -122,7 +122,7 @@ define dso_local zeroext i1 @IsBeginArray(i8* nocapture readonly %0, i32* nocapt
   ret i1 %7
 }
 
-; Function Attrs: norecurse nounwind readonly uwtable willreturn mustprogress
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
 define dso_local zeroext i1 @IsEndArray(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
   %3 = load i32, i32* %1, align 4, !tbaa !2
   %4 = sext i32 %3 to i64
@@ -132,7 +132,7 @@ define dso_local zeroext i1 @IsEndArray(i8* nocapture readonly %0, i32* nocaptur
   ret i1 %7
 }
 
-; Function Attrs: norecurse nounwind readonly uwtable willreturn mustprogress
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
 define dso_local zeroext i1 @IsNull(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
   %3 = load i32, i32* %1, align 4, !tbaa !2
   %4 = sext i32 %3 to i64
@@ -152,9 +152,9 @@ define internal void @_GLOBAL__sub_I_llvm_jsoncons_helpers.cpp() #6 section ".te
 attributes #0 = { "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { nofree nounwind }
-attributes #3 = { norecurse nounwind readnone uwtable willreturn mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #4 = { norecurse nounwind readonly uwtable willreturn mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #5 = { uwtable mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #3 = { alwaysinline norecurse nounwind readnone uwtable willreturn mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #4 = { alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #5 = { alwaysinline uwtable mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #6 = { uwtable "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #7 = { nounwind }
 

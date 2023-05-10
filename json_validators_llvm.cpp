@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <jsoncons/json_cursor.hpp>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/IRBuilder.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IRReader/IRReader.h>
@@ -30,13 +32,15 @@ namespace JsonValidators {
 //        printf("FillWithEvents called, capacity=%d\n", capacity);
         auto cursor = toJsonCursor(c);
         int res = 0;
+        int8_t result[1000];
         while (res < capacity && !cursor->done()) {
-            arr[res++] = static_cast<int8_t>(cursor->current().event_type());
+            result[res++] = static_cast<int8_t>(cursor->current().event_type());
             cursor->next();
         }
         if (res < capacity) {
-            arr[res++] = -1;
+            result[res++] = -1;
         }
+        memcpy(arr, result, res);
 //        printf("FillWithEvents finished, res=%d\n", res);
         return res;
     }
@@ -57,7 +61,7 @@ namespace JsonValidators {
         builder.SetInsertPoint(entry);
 
 
-        auto capacity = builder.getInt32(100);
+        auto capacity = builder.getInt32(1000);
         auto arr = builder.CreateAlloca(builder.getInt8Ty(), capacity, "array_ptr");
         auto next = builder.CreateAlloca(builder.getInt32Ty(), nullptr, "next");
         builder.CreateStore(builder.getInt32(-1), next);

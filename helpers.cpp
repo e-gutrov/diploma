@@ -6,6 +6,7 @@
 #include <ytsaurus/contrib/libs/llvm16/include/llvm-c/TargetMachine.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/Transforms/IPO/PassManagerBuilder.h>
+#include <ytsaurus/contrib/libs/llvm16/include/llvm/Transforms/IPO/AlwaysInliner.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/LegacyPassManager.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IR/PassManager.h>
 
@@ -186,6 +187,10 @@ llvm::Function* CreateTypeValidatorNew(
     }
     auto funcName = "validate" + suffix;
     auto func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, funcName, module);
+    auto attrSet = func->getAttributes();
+    auto newAttrSet = attrSet.addFnAttribute(*context, llvm::Attribute::AlwaysInline);
+    func->setAttributes(newAttrSet);
+
     auto arrArg = func->arg_begin();
     auto nextArg = std::next(arrArg);
     auto sizeArg = std::next(nextArg);
@@ -446,6 +451,18 @@ orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique
     module->setTargetTriple(triple);
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = 2;
+    llvm::legacy::PassManager PM;
+    PMBuilder.Inliner = llvm::createAlwaysInlinerLegacyPass();
+    PMBuilder.populateModulePassManager(PM);
+
+//    std::cerr << "BEFORE INLINING" << std::endl;
+//    module->dump();
+
+    PM.run(*module);
+
+//    std::cerr << "AFTER INLINING" << std::endl;
+//    module->dump();
+
     llvm::legacy::FunctionPassManager FPM(module.get());
     PMBuilder.populateFunctionPassManager(FPM);
     FPM.doInitialization();
@@ -460,7 +477,8 @@ orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique
     //    PMBuilder.populateModulePassManager(MPM);
     //    MPM.run(*module);
 
-//        module->dump();
+//    std::cerr << "AFTER OPTIMIZATION INLINING" << std::endl;
+//    module->dump();
 
     return {std::move(module), std::move(context)};
 }
