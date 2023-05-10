@@ -115,7 +115,7 @@ void benchYsonValidation(const std::string& data, const TypeBasePtr& type, int i
 }
 
 void benchYsonLlvmValidation(const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
-    auto jit = PrepareJit(PrepareJitFor::Yson, true);
+    auto jit = PrepareJit(PrepareJitFor::Yson, false);
     if (auto err = jit->addIRModule(YsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }
@@ -154,11 +154,11 @@ void runAllBenchmarks(
 //        benchJsonconsValidation(data, jsonSchema, iterations);
 //        benchJsonconsCursorValidation(data, schema, iterations);
 //        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
-        benchJsonLlvmValidation(data, schema, iterations);
-//        auto ysonBinary = ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary);
-//        benchYsonValidation(ysonBinary, schema, iterations, "binary");
+//        benchJsonLlvmValidation(data, schema, iterations);
+        auto ysonBinary = ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary);
+        benchYsonValidation(ysonBinary, schema, iterations, "binary");
 //        benchYsonValidation(yson, schema, iterations, "text");
-//        benchYsonLlvmValidation(ysonBinary, schema, iterations, "binary");
+        benchYsonLlvmValidation(ysonBinary, schema, iterations, "binary");
         std::cout << "=====================\n";
     }
     std::cout << "\n\n";
@@ -260,13 +260,13 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    benchListOfInts(10000, 20000);
-    benchListOfOptionalInts(10000, 8000);
-    benchListOf5xOptionalInts(10000, 10000);
-    benchListOfStrings(10000, 10000);
-    benchListOfOptionalStrings(10000, 10000);
+    benchListOfInts(40000, 20000);
+    benchListOfOptionalInts(40000, 8000);
+    benchListOf5xOptionalInts(40000, 10000);
+    benchListOfStrings(40000, 10000);
+    benchListOfOptionalStrings(40000, 10000);
 
-    benchListOfListOfOptionalListOfInts(1000, 10000);
-    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(10000, 1000);
+    benchListOfListOfOptionalListOfInts(4000, 10000);
+    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40000, 1000);
     return 0;
 }

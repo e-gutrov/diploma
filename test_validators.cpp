@@ -84,7 +84,7 @@ void testYsonCursorValidation(const std::vector<std::pair<std::string, bool>>& t
 }
 
 void testYsonLlvmValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
-    auto jit = PrepareJit(PrepareJitFor::Yson, true);
+    auto jit = PrepareJit(PrepareJitFor::Yson, false);
     if (auto err = jit->addIRModule(YsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }

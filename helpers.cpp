@@ -450,7 +450,7 @@ orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique
     std::string triple = LLVMGetDefaultTargetTriple();
     module->setTargetTriple(triple);
     llvm::PassManagerBuilder PMBuilder;
-    PMBuilder.OptLevel = 2;
+    PMBuilder.OptLevel = 3;
     llvm::legacy::PassManager PM;
     PMBuilder.Inliner = llvm::createAlwaysInlinerLegacyPass();
     PMBuilder.populateModulePassManager(PM);
@@ -517,16 +517,18 @@ std::unique_ptr<orc::LLJIT> PrepareJit(PrepareJitFor prepareFor, bool useProcess
         }
         case PrepareJitFor::Yson: {
             if (useProcessSymbols) {
-                symbolMap = orc::SymbolMap{{
-                    {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
-                    {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
-                    {Mangle("IsNull"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EntityValue>), JITSymbolFlags::Callable)},
-                    {Mangle("IsBeginArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::BeginList>), JITSymbolFlags::Callable)},
-                    {Mangle("IsEndArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EndList>), JITSymbolFlags::Callable)},
-                    {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::CallNext), JITSymbolFlags::Callable)},
-                    {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsDone), JITSymbolFlags::Callable)},
-                }};
+                assert(0);
+//                symbolMap = orc::SymbolMap{{
+//                    {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
+//                    {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
+//                    {Mangle("IsNull"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EntityValue>), JITSymbolFlags::Callable)},
+//                    {Mangle("IsBeginArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::BeginList>), JITSymbolFlags::Callable)},
+//                    {Mangle("IsEndArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EndList>), JITSymbolFlags::Callable)},
+//                    {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::CallNext), JITSymbolFlags::Callable)},
+//                    {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsDone), JITSymbolFlags::Callable)},
+//                }};
             }
+            symbolMap.insert({Mangle("FillWithEvents"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::FillWithEvents), JITSymbolFlags::Callable)});
             break;
         }
 //        case UseProcessSymbols::None: {}
