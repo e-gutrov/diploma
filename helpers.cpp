@@ -165,7 +165,6 @@ llvm::Function* CreateTypeValidatorNew(
     llvm::Module* module,
     const std::unordered_map<std::string, llvm::Function*>& functions,
     const std::string& suffix) {
-//    printf("CreateTypeValidatorNew called\n");
 
     auto int8PtrTp = builder->getInt8PtrTy();
     auto int32Ptr = builder->getIntPtrTy(module->getDataLayout());
@@ -196,7 +195,6 @@ llvm::Function* CreateTypeValidatorNew(
     auto sizeArg = std::next(nextArg);
     auto capacityArg = std::next(sizeArg);
     auto cursorArg = std::next(capacityArg);
-//    printf("Got args\n");
 
     switch (schema->GetType()) {
         case ValueType::Optional: {
@@ -204,24 +202,18 @@ llvm::Function* CreateTypeValidatorNew(
 
             auto entry = llvm::BasicBlock::Create(*context, "entry", func);
             builder->SetInsertPoint(entry);
-            // TODO: IsNullAndCallNext()?
             auto isNullCall = builder->CreateCall(
                     functions.at("IsNull"),
                     {arrArg, nextArg});
-//            printf("IsNull\n");
             auto nullCase = llvm::BasicBlock::Create(*context, "null", func);
             auto nonNullCase = llvm::BasicBlock::Create(*context, "nonNull", func);
             builder->CreateCondBr(isNullCall, nullCase, nonNullCase);
 
             builder->SetInsertPoint(nullCase);
-//            printf("CallNext\n");
             auto nextCall = builder->CreateCall(functions.at("CallNext"),{arrArg, nextArg, sizeArg, capacityArg, cursorArg});
-//            printf("CallNext created\n");
             builder->CreateRet(builder->getInt1(true));
 
             builder->SetInsertPoint(nonNullCase);
-//            printf("ValidateChild\n");
-            // TODO: why does it fail?
             auto childCall = builder->CreateCall(validateChild, {arrArg, nextArg, sizeArg, capacityArg, cursorArg});
             builder->CreateRet(childCall);
             return func;
@@ -455,13 +447,7 @@ orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique
     PMBuilder.Inliner = llvm::createAlwaysInlinerLegacyPass();
     PMBuilder.populateModulePassManager(PM);
 
-//    std::cerr << "BEFORE INLINING" << std::endl;
-//    module->dump();
-
     PM.run(*module);
-
-//    std::cerr << "AFTER INLINING" << std::endl;
-//    module->dump();
 
     llvm::legacy::FunctionPassManager FPM(module.get());
     PMBuilder.populateFunctionPassManager(FPM);
@@ -470,15 +456,6 @@ orc::ThreadSafeModule FinalizeModule(std::unique_ptr<Module> module, std::unique
         FPM.run(F);
     }
     FPM.doFinalization();
-
-    // TODO: figure out
-    // Optionally, run module-level optimization passes.
-    //    llvm::legacy::ModulePassManager MPM;
-    //    PMBuilder.populateModulePassManager(MPM);
-    //    MPM.run(*module);
-
-//    std::cerr << "AFTER OPTIMIZATION INLINING" << std::endl;
-//    module->dump();
 
     return {std::move(module), std::move(context)};
 }
@@ -495,43 +472,16 @@ std::unique_ptr<orc::LLJIT> PrepareJit(PrepareJitFor prepareFor, bool useProcess
     auto& JD = jit->getMainJITDylib();
     orc::MangleAndInterner Mangle(ES, DL);
 
-    // TODO
-    auto symbolMap = orc::SymbolMap{};
+    orc::SymbolMap symbolMap;
     switch (prepareFor) {
         case PrepareJitFor::Json: {
-            if (useProcessSymbols) {
-                assert(0);
-                // TODO
-//                symbolMap = orc::SymbolMap{{
-//                    {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
-//                    {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
-//                    {Mangle("IsNull"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsType<jsoncons::staj_event_type::null_value>), JITSymbolFlags::Callable)},
-//                    {Mangle("IsBeginArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsType<jsoncons::staj_event_type::begin_array>), JITSymbolFlags::Callable)},
-//                    {Mangle("IsEndArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsType<jsoncons::staj_event_type::end_array>), JITSymbolFlags::Callable)},
-//                    {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::CallNext), JITSymbolFlags::Callable)},
-//                    {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::IsDone), JITSymbolFlags::Callable)},
-//                }};
-            }
             symbolMap.insert({Mangle("FillWithEvents"), JITEvaluatedSymbol(pointerToJITTargetAddress(&JsonValidators::FillWithEvents), JITSymbolFlags::Callable)});
             break;
         }
         case PrepareJitFor::Yson: {
-            if (useProcessSymbols) {
-                assert(0);
-//                symbolMap = orc::SymbolMap{{
-//                    {Mangle("ValidateInt"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::Int>), JITSymbolFlags::Callable)},
-//                    {Mangle("ValidateString"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::ValidateSimpleType<ValueType::String>), JITSymbolFlags::Callable)},
-//                    {Mangle("IsNull"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EntityValue>), JITSymbolFlags::Callable)},
-//                    {Mangle("IsBeginArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::BeginList>), JITSymbolFlags::Callable)},
-//                    {Mangle("IsEndArray"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsType<NYT::NYson::EYsonItemType::EndList>), JITSymbolFlags::Callable)},
-//                    {Mangle("CallNext"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::CallNext), JITSymbolFlags::Callable)},
-//                    {Mangle("IsDone"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::IsDone), JITSymbolFlags::Callable)},
-//                }};
-            }
             symbolMap.insert({Mangle("FillWithEvents"), JITEvaluatedSymbol(pointerToJITTargetAddress(&YsonValidators::FillWithEvents), JITSymbolFlags::Callable)});
             break;
         }
-//        case UseProcessSymbols::None: {}
     }
 
     if (auto err = JD.define(absoluteSymbols(symbolMap))) {
