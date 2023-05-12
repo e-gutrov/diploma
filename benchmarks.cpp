@@ -124,13 +124,7 @@ void benchYsonLlvmValidation(const std::string& data, const TypeBasePtr& type, i
         std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
-        int res = -1;
-        {
-            TMemoryInput memoryInput(data);
-            NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
-            NYT::NYson::TYsonPullParserCursor cursor(&parser);
-            res += func(&cursor);
-        }
+        int res = 0;
         Timer t("LLVM YSON");
         for (int i = 0; i < iterations; ++i) {
             TMemoryInput memoryInput(data);
