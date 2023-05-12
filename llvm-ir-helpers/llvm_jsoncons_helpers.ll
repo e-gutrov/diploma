@@ -1,159 +1,170 @@
-; ModuleID = 'llvm_madness.cpp'
-source_filename = "llvm_madness.cpp"
+; ModuleID = 'llvm_jsoncons_helpers.cpp'
+source_filename = "llvm_jsoncons_helpers.cpp"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
+target triple = "x86_64-pc-linux-gnu"
 
 %"class.std::ios_base::Init" = type { i8 }
+%"class.jsoncons::basic_json_cursor" = type opaque
 
 @_ZStL8__ioinit = internal global %"class.std::ios_base::Init" zeroinitializer, align 1
 @__dso_handle = external hidden global i8
-@llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @_GLOBAL__sub_I_llvm_madness.cpp, ptr null }]
+@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_llvm_jsoncons_helpers.cpp, i8* null }]
 
-declare void @_ZNSt8ios_base4InitC1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #0
+declare dso_local void @_ZNSt8ios_base4InitC1Ev(%"class.std::ios_base::Init"* nonnull dereferenceable(1)) unnamed_addr #0
 
 ; Function Attrs: nounwind
-declare void @_ZNSt8ios_base4InitD1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #1
+declare dso_local void @_ZNSt8ios_base4InitD1Ev(%"class.std::ios_base::Init"* nonnull dereferenceable(1)) unnamed_addr #1
 
 ; Function Attrs: nofree nounwind
-declare i32 @__cxa_atexit(ptr, ptr, ptr) local_unnamed_addr #2
+declare dso_local i32 @__cxa_atexit(void (i8*)*, i8*, i8*) local_unnamed_addr #2
 
-; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none) uwtable
-define dso_local ptr @toJsonCursor(ptr noundef readnone returned %ptr) local_unnamed_addr #3 {
-entry:
-  ret ptr %ptr
+; Function Attrs: alwaysinline norecurse nounwind readnone uwtable willreturn mustprogress
+define dso_local %"class.jsoncons::basic_json_cursor"* @toJsonCursor(i8* readnone %0) local_unnamed_addr #3 {
+  %2 = bitcast i8* %0 to %"class.jsoncons::basic_json_cursor"*
+  ret %"class.jsoncons::basic_json_cursor"* %2
 }
 
-; Function Attrs: mustprogress uwtable
-define dso_local zeroext i1 @IsDone(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn = getelementptr inbounds ptr, ptr %vtable, i64 3
-  %0 = load ptr, ptr %vfn, align 8
-  %call1 = tail call noundef zeroext i1 %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  ret i1 %call1
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
+define dso_local signext i8 @GetCurrentType(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
+  %3 = load i32, i32* %1, align 4, !tbaa !2
+  %4 = sext i32 %3 to i64
+  %5 = getelementptr inbounds i8, i8* %0, i64 %4
+  %6 = load i8, i8* %5, align 1, !tbaa !6
+  ret i8 %6
 }
 
-; Function Attrs: mustprogress uwtable
-define dso_local i32 @GetCurrentType(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn = getelementptr inbounds ptr, ptr %vtable, i64 4
-  %0 = load ptr, ptr %vfn, align 8
-  %call1 = tail call noundef nonnull align 8 dereferenceable(32) ptr %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %1 = load i32, ptr %call1, align 8, !tbaa !8
-  ret i32 %1
-}
+; Function Attrs: alwaysinline uwtable mustprogress
+define dso_local void @CallNext(i8* %0, i32* nocapture %1, i32* nocapture %2, i32 %3, i8* %4) local_unnamed_addr #5 {
+  %6 = load i32, i32* %1, align 4, !tbaa !2
+  %7 = add nsw i32 %6, 1
+  store i32 %7, i32* %1, align 4, !tbaa !2
+  %8 = load i32, i32* %2, align 4, !tbaa !2
+  %9 = icmp eq i32 %7, %8
+  br i1 %9, label %10, label %12
 
-; Function Attrs: mustprogress uwtable
-define dso_local void @CallNext(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn = getelementptr inbounds ptr, ptr %vtable, i64 7
-  %0 = load ptr, ptr %vfn, align 8
-  tail call void %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
+10:                                               ; preds = %5
+  store i32 0, i32* %1, align 4, !tbaa !2
+  %11 = tail call i32 @FillWithEvents(i8* %0, i32 %3, i8* %4)
+  store i32 %11, i32* %2, align 4, !tbaa !2
+  br label %12
+
+12:                                               ; preds = %10, %5
   ret void
 }
 
-; Function Attrs: mustprogress uwtable
-define dso_local zeroext i1 @ValidateInt(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable.i = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn.i = getelementptr inbounds ptr, ptr %vtable.i, i64 4
-  %0 = load ptr, ptr %vfn.i, align 8
-  %call1.i = tail call noundef nonnull align 8 dereferenceable(32) ptr %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %1 = load i32, ptr %call1.i, align 8, !tbaa !8
-  %vtable = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn = getelementptr inbounds ptr, ptr %vtable, i64 7
-  %2 = load ptr, ptr %vfn, align 8
-  tail call void %2(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %3 = add i32 %1, -9
-  %4 = icmp ult i32 %3, 2
-  ret i1 %4
+declare dso_local i32 @FillWithEvents(i8*, i32, i8*) local_unnamed_addr #0
+
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
+define dso_local zeroext i1 @IsDone(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
+  %3 = load i32, i32* %1, align 4, !tbaa !2
+  %4 = sext i32 %3 to i64
+  %5 = getelementptr inbounds i8, i8* %0, i64 %4
+  %6 = load i8, i8* %5, align 1, !tbaa !6
+  %7 = icmp eq i8 %6, -1
+  ret i1 %7
 }
 
-; Function Attrs: mustprogress uwtable
-define dso_local zeroext i1 @ValidateString(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable.i = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn.i = getelementptr inbounds ptr, ptr %vtable.i, i64 4
-  %0 = load ptr, ptr %vfn.i, align 8
-  %call1.i = tail call noundef nonnull align 8 dereferenceable(32) ptr %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %1 = load i32, ptr %call1.i, align 8, !tbaa !8
-  %vtable = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn = getelementptr inbounds ptr, ptr %vtable, i64 7
-  %2 = load ptr, ptr %vfn, align 8
-  tail call void %2(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %3 = add i32 %1, -5
-  %4 = icmp ult i32 %3, 2
-  ret i1 %4
+; Function Attrs: alwaysinline uwtable mustprogress
+define dso_local zeroext i1 @ValidateInt(i8* %0, i32* nocapture %1, i32* nocapture %2, i32 %3, i8* %4) local_unnamed_addr #5 {
+  %6 = load i32, i32* %1, align 4, !tbaa !2
+  %7 = sext i32 %6 to i64
+  %8 = getelementptr inbounds i8, i8* %0, i64 %7
+  %9 = load i8, i8* %8, align 1, !tbaa !6
+  %10 = add nsw i32 %6, 1
+  store i32 %10, i32* %1, align 4, !tbaa !2
+  %11 = load i32, i32* %2, align 4, !tbaa !2
+  %12 = icmp eq i32 %10, %11
+  br i1 %12, label %13, label %15
+
+13:                                               ; preds = %5
+  store i32 0, i32* %1, align 4, !tbaa !2
+  %14 = tail call i32 @FillWithEvents(i8* nonnull %0, i32 %3, i8* %4)
+  store i32 %14, i32* %2, align 4, !tbaa !2
+  br label %15
+
+15:                                               ; preds = %5, %13
+  %16 = add i8 %9, -9
+  %17 = icmp ult i8 %16, 2
+  ret i1 %17
 }
 
-; Function Attrs: mustprogress uwtable
-define dso_local zeroext i1 @IsBeginArray(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable.i = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn.i = getelementptr inbounds ptr, ptr %vtable.i, i64 4
-  %0 = load ptr, ptr %vfn.i, align 8
-  %call1.i = tail call noundef nonnull align 8 dereferenceable(32) ptr %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %1 = load i32, ptr %call1.i, align 8, !tbaa !8
-  %cmp = icmp eq i32 %1, 0
-  ret i1 %cmp
+; Function Attrs: alwaysinline uwtable mustprogress
+define dso_local zeroext i1 @ValidateString(i8* %0, i32* nocapture %1, i32* nocapture %2, i32 %3, i8* %4) local_unnamed_addr #5 {
+  %6 = load i32, i32* %1, align 4, !tbaa !2
+  %7 = sext i32 %6 to i64
+  %8 = getelementptr inbounds i8, i8* %0, i64 %7
+  %9 = load i8, i8* %8, align 1, !tbaa !6
+  %10 = add nsw i32 %6, 1
+  store i32 %10, i32* %1, align 4, !tbaa !2
+  %11 = load i32, i32* %2, align 4, !tbaa !2
+  %12 = icmp eq i32 %10, %11
+  br i1 %12, label %13, label %15
+
+13:                                               ; preds = %5
+  store i32 0, i32* %1, align 4, !tbaa !2
+  %14 = tail call i32 @FillWithEvents(i8* nonnull %0, i32 %3, i8* %4)
+  store i32 %14, i32* %2, align 4, !tbaa !2
+  br label %15
+
+15:                                               ; preds = %5, %13
+  %16 = add i8 %9, -5
+  %17 = icmp ult i8 %16, 2
+  ret i1 %17
 }
 
-; Function Attrs: mustprogress uwtable
-define dso_local zeroext i1 @IsEndArray(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable.i = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn.i = getelementptr inbounds ptr, ptr %vtable.i, i64 4
-  %0 = load ptr, ptr %vfn.i, align 8
-  %call1.i = tail call noundef nonnull align 8 dereferenceable(32) ptr %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %1 = load i32, ptr %call1.i, align 8, !tbaa !8
-  %cmp = icmp eq i32 %1, 1
-  ret i1 %cmp
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
+define dso_local zeroext i1 @IsBeginArray(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
+  %3 = load i32, i32* %1, align 4, !tbaa !2
+  %4 = sext i32 %3 to i64
+  %5 = getelementptr inbounds i8, i8* %0, i64 %4
+  %6 = load i8, i8* %5, align 1, !tbaa !6
+  %7 = icmp eq i8 %6, 0
+  ret i1 %7
 }
 
-; Function Attrs: mustprogress uwtable
-define dso_local zeroext i1 @IsNull(ptr noundef %ptr) local_unnamed_addr #4 {
-entry:
-  %vtable.i = load ptr, ptr %ptr, align 8, !tbaa !5
-  %vfn.i = getelementptr inbounds ptr, ptr %vtable.i, i64 4
-  %0 = load ptr, ptr %vfn.i, align 8
-  %call1.i = tail call noundef nonnull align 8 dereferenceable(32) ptr %0(ptr noundef nonnull align 8 dereferenceable(1121) %ptr)
-  %1 = load i32, ptr %call1.i, align 8, !tbaa !8
-  %cmp = icmp eq i32 %1, 7
-  ret i1 %cmp
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
+define dso_local zeroext i1 @IsEndArray(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
+  %3 = load i32, i32* %1, align 4, !tbaa !2
+  %4 = sext i32 %3 to i64
+  %5 = getelementptr inbounds i8, i8* %0, i64 %4
+  %6 = load i8, i8* %5, align 1, !tbaa !6
+  %7 = icmp eq i8 %6, 1
+  ret i1 %7
+}
+
+; Function Attrs: alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress
+define dso_local zeroext i1 @IsNull(i8* nocapture readonly %0, i32* nocapture readonly %1) local_unnamed_addr #4 {
+  %3 = load i32, i32* %1, align 4, !tbaa !2
+  %4 = sext i32 %3 to i64
+  %5 = getelementptr inbounds i8, i8* %0, i64 %4
+  %6 = load i8, i8* %5, align 1, !tbaa !6
+  %7 = icmp eq i8 %6, 7
+  ret i1 %7
 }
 
 ; Function Attrs: uwtable
-define internal void @_GLOBAL__sub_I_llvm_madness.cpp() #5 section ".text.startup" {
-entry:
-  tail call void @_ZNSt8ios_base4InitC1Ev(ptr noundef nonnull align 1 dereferenceable(1) @_ZStL8__ioinit)
-  %0 = tail call i32 @__cxa_atexit(ptr nonnull @_ZNSt8ios_base4InitD1Ev, ptr nonnull @_ZStL8__ioinit, ptr nonnull @__dso_handle) #6
+define internal void @_GLOBAL__sub_I_llvm_jsoncons_helpers.cpp() #6 section ".text.startup" {
+  tail call void @_ZNSt8ios_base4InitC1Ev(%"class.std::ios_base::Init"* nonnull dereferenceable(1) @_ZStL8__ioinit)
+  %1 = tail call i32 @__cxa_atexit(void (i8*)* bitcast (void (%"class.std::ios_base::Init"*)* @_ZNSt8ios_base4InitD1Ev to void (i8*)*), i8* getelementptr inbounds (%"class.std::ios_base::Init", %"class.std::ios_base::Init"* @_ZStL8__ioinit, i64 0, i32 0), i8* nonnull @__dso_handle) #7
   ret void
 }
 
-attributes #0 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #1 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #0 = { "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #1 = { nounwind "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { nofree nounwind }
-attributes #3 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #4 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #5 = { uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #6 = { nounwind }
+attributes #3 = { alwaysinline norecurse nounwind readnone uwtable willreturn mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #4 = { alwaysinline norecurse nounwind readonly uwtable willreturn mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #5 = { alwaysinline uwtable mustprogress "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #6 = { uwtable "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #7 = { nounwind }
 
-!llvm.module.flags = !{!0, !1, !2, !3}
-!llvm.ident = !{!4}
+!llvm.module.flags = !{!0}
+!llvm.ident = !{!1}
 
 !0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{i32 8, !"PIC Level", i32 2}
-!2 = !{i32 7, !"PIE Level", i32 2}
-!3 = !{i32 7, !"uwtable", i32 2}
-!4 = !{!"clang version 16.0.0 (https://github.com/llvm/llvm-project.git 08d094a0e457360ad8b94b017d2dc277e697ca76)"}
-!5 = !{!6, !6, i64 0}
-!6 = !{!"vtable pointer", !7, i64 0}
-!7 = !{!"Simple C++ TBAA"}
-!8 = !{!9, !10, i64 0}
-!9 = !{!"_ZTSN8jsoncons16basic_staj_eventIcEE", !10, i64 0, !12, i64 4, !13, i64 8, !11, i64 16, !13, i64 24}
-!10 = !{!"_ZTSN8jsoncons15staj_event_typeE", !11, i64 0}
-!11 = !{!"omnipotent char", !7, i64 0}
-!12 = !{!"_ZTSN8jsoncons12semantic_tagE", !11, i64 0}
-!13 = !{!"long", !11, i64 0}
+!1 = !{!"Ubuntu clang version 12.0.1-19ubuntu3"}
+!2 = !{!3, !3, i64 0}
+!3 = !{!"int", !4, i64 0}
+!4 = !{!"omnipotent char", !5, i64 0}
+!5 = !{!"Simple C++ TBAA"}
+!6 = !{!4, !4, i64 0}

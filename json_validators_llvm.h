@@ -10,6 +10,7 @@ namespace JsonValidators {
     jsoncons::staj_event_type GetCurrentType(void* ptr);
     bool IsDone(void* ptr);
     void CallNext(void* ptr);
+    int FillWithEvents(int8_t* arr, int capacity, void* c);
 
     template<ValueType T>
     bool ValidateSimpleType(void* ptr) {

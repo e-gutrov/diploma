@@ -27,6 +27,8 @@ namespace YsonValidators {
         return GetCurrentType(ptr) == T;
     }
 
+    int FillWithEvents(int8_t* arr, int capacity, void* c);
+
     llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema);
 }
 
