@@ -1,7 +1,3 @@
-//#include <ytsaurus/yt/yt/core/yson/syntax_checker.h>
-//
-//using namespace NYT::NYson;
-
 #include <cstdint>
 
 enum class MyYsonItemType {
@@ -20,22 +16,15 @@ enum class MyYsonItemType {
     StringValue,
 };
 
-//__attribute__((always_inline))
-//extern "C" TYsonPullParserCursor* toYsonCursor(void* ptr) {
-//    return reinterpret_cast<TYsonPullParserCursor*>(ptr);
-//}
-
 extern "C" int FillWithEvents(int8_t* arr, int capacity, void* c);
 
 __attribute__((always_inline))
 extern "C" int8_t GetCurrentType(int8_t* arr, int* next) {
-//    printf("GetCurrentType called, next=%d, current=%d\n", *next, arr[*next]);
     return arr[*next];
 }
 
 __attribute__((always_inline))
 extern "C" void CallNext(int8_t* arr, int* next, int* size, int capacity, void* cursor) {
-//    printf("CallNext, next=%d, size=%d\n", *next, *size);
     if (++(*next) == *size) {
         *next = 0;
         *size = FillWithEvents(arr, capacity, cursor);
@@ -46,16 +35,6 @@ __attribute__((always_inline))
 extern "C" bool IsDone(int8_t* arr, int* next) {
     return GetCurrentType(arr, next) == -1;
 }
-
-//extern "C" MyYsonItemType GetCurrentType(void* ptr) {
-//    auto cursor = toYsonCursor(ptr);
-//    return cursor->GetCurrent().GetType();
-//}
-//
-//extern "C" void CallNext(void* ptr) {
-//    auto cursor = toYsonCursor(ptr);
-//    cursor->Next();
-//}
 
 __attribute__((always_inline))
 extern "C" bool ValidateInt(int8_t* arr, int* next, int* size, int capacity, void* cursor) {

@@ -16,6 +16,8 @@
 #include "jsoncons_cursor_validator.h"
 #include "yson_cursor_validator.h"
 
+// TODO: think about refactoring
+
 class Timer {
 public:
     Timer(const std::string& name = ""): Start_(std::chrono::high_resolution_clock::now()), Name_(name) {}
@@ -103,7 +105,7 @@ void benchJsonLlvmValidation(const std::string& data, const TypeBasePtr& type, i
 }
 
 void benchYsonValidation(const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
-    auto validator = CreateYsonCursorValidator(type);
+    auto validator = YsonValidators::CreatePolymorphicValidator(type);
     Timer t("poly YSON cursor");
     int res = 0;
     for (int i = 0; i < iterations; ++i) {

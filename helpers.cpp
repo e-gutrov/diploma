@@ -21,6 +21,8 @@
 
 using namespace llvm;
 
+// TODO: think about refactoring
+
 namespace {
 
     void DoConvertJsonToYson(NYson::TYsonWriter *writer, jsoncons::json_cursor *cursor);
@@ -110,52 +112,16 @@ std::string ConvertJsonToYson(const std::string& json, NYT::NYson::EYsonFormat f
     return std::string(result.data(), result.size());
 }
 
-std::unordered_map<std::string, Function*> GenerateFunctionDeclarations(IRBuilder<>* builder, Module* module, bool useExisting) {
-    if (useExisting) {
-        return {
-            {"IsDone", module->getFunction("IsDone")},
-            {"CallNext", module->getFunction("CallNext")},
-            {"ValidateInt", module->getFunction("ValidateInt")},
-            {"ValidateString", module->getFunction("ValidateString")},
-            {"IsNull", module->getFunction("IsNull")},
-            {"IsBeginArray", module->getFunction("IsBeginArray")},
-            {"IsEndArray", module->getFunction("IsEndArray")},
-        };
-    } else {
-        auto voidTy = builder->getVoidTy();
-
-        auto boolTy = builder->getInt1Ty();
-        auto voidPtrTy = builder->getInt8PtrTy();
-
-        auto isDoneType = FunctionType::get(boolTy, {voidPtrTy}, false);
-        auto isDoneFunc = Function::Create(isDoneType, Function::ExternalLinkage, "IsDone", module);
-
-        auto callNextType = FunctionType::get(voidTy, {voidPtrTy}, false);
-        auto callNextFunc = Function::Create(callNextType, Function::ExternalLinkage, "CallNext", module);
-
-        auto validateIntType = FunctionType::get(boolTy, {voidPtrTy}, false);
-        auto validateIntFunc = Function::Create(validateIntType, Function::ExternalLinkage, "ValidateInt", module);
-
-        auto validateStringType = FunctionType::get(boolTy, {voidPtrTy}, false);
-        auto validateStringFunc = Function::Create(validateIntType, Function::ExternalLinkage, "ValidateString", module);
-
-        // TODO: All these functions should probably be "ValidateX" and call Next() on cursor if there is an expected type
-        auto isNullType = FunctionType::get(boolTy, {voidPtrTy}, false);
-        auto isNullFunc =  Function::Create(isNullType, Function::ExternalLinkage, "IsNull", module);
-
-        auto isBeginArrayFunc = Function::Create(isNullType, Function::ExternalLinkage, "IsBeginArray", module);
-        auto isEndArrayFunc = Function::Create(isNullType, Function::ExternalLinkage, "IsEndArray", module);
-
-        return {
-            {"IsDone", isDoneFunc},
-            {"CallNext", callNextFunc},
-            {"ValidateInt", validateIntFunc},
-            {"ValidateString", validateStringFunc},
-            {"IsNull", isNullFunc},
-            {"IsBeginArray", isBeginArrayFunc},
-            {"IsEndArray", isEndArrayFunc},
-        };
-    }
+std::unordered_map<std::string, Function*> GetFunctionAddresses(IRBuilder<>* builder, Module* module) {
+    return {
+        {"IsDone", module->getFunction("IsDone")},
+        {"CallNext", module->getFunction("CallNext")},
+        {"ValidateInt", module->getFunction("ValidateInt")},
+        {"ValidateString", module->getFunction("ValidateString")},
+        {"IsNull", module->getFunction("IsNull")},
+        {"IsBeginArray", module->getFunction("IsBeginArray")},
+        {"IsEndArray", module->getFunction("IsEndArray")},
+    };
 }
 
 llvm::Function* CreateTypeValidatorNew(

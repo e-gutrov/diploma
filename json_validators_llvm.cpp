@@ -9,29 +9,10 @@
 #include "helpers.h"
 
 namespace JsonValidators {
-    jsoncons::json_cursor* toJsonCursor(void* ptr) {
-        return reinterpret_cast<jsoncons::json_cursor*>(ptr);
-    }
-
-    bool IsDone(void* ptr) {
-        auto cursor = toJsonCursor(ptr);
-        return cursor->done();
-    }
-
-    jsoncons::staj_event_type GetCurrentType(void* ptr) {
-        auto cursor = toJsonCursor(ptr);
-        return cursor->current().event_type();
-    }
-
-    void CallNext(void* ptr) {
-        auto cursor = toJsonCursor(ptr);
-        cursor->next();
-    }
-
     int FillWithEvents(int8_t* arr, int capacity, void* c) {
-//        printf("FillWithEvents called, capacity=%d\n", capacity);
-        auto cursor = toJsonCursor(c);
+        auto cursor = reinterpret_cast<jsoncons::json_cursor*>(c);
         int res = 0;
+        // TODO: eliminate this part, probably memcpy is not needed
         int8_t result[1000];
         while (res < capacity && !cursor->done()) {
             result[res++] = static_cast<int8_t>(cursor->current().event_type());
@@ -41,16 +22,17 @@ namespace JsonValidators {
             result[res++] = -1;
         }
         memcpy(arr, result, res);
-//        printf("FillWithEvents finished, res=%d\n", res);
         return res;
     }
 
+    // TODO: this code is completely the same as in YSON, share it
     llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema) {
         auto context = std::make_unique<llvm::LLVMContext>();
         llvm::IRBuilder<> builder(*context);
         llvm::SMDiagnostic err;
+        // TODO: path
         auto module = llvm::parseIRFile("/home/egor/CLionProjects/coursework/llvm-ir-helpers/llvm_jsoncons_helpers.ll", err, *context);
-        auto functions = GenerateFunctionDeclarations(&builder, module.get(), true);
+        auto functions = GetFunctionAddresses(&builder, module.get());
 
         auto validateRoot = CreateTypeValidatorNew(schema, context.get(), &builder, module.get(), functions);
 
@@ -72,13 +54,11 @@ namespace JsonValidators {
 
         auto callValidateRoot = builder.CreateCall(validateRoot, {arr, next, size, capacity, mainFunc->arg_begin()});
         llvm::Value* validateResult = callValidateRoot;
-        auto callIsDone = builder.CreateCall(functions.at("IsDone"), {arr, next});
-        llvm::Value* isDone = callIsDone;
+        auto isDone = builder.CreateCall(functions.at("IsDone"), {arr, next});
 
         auto result = builder.CreateAnd(validateResult, isDone);
         builder.CreateRet(result);
 
-//        module->dump();
         return FinalizeModule(std::move(module), std::move(context));
     }
 }

@@ -8,6 +8,8 @@
 
 #include "table_schema.h"
 
+// TODO: think about refactoring
+
 std::string ConvertJsonToYson(const std::string&, NYT::NYson::EYsonFormat format = NYT::NYson::EYsonFormat::Binary);
 
 llvm::Function* CreateTypeValidatorNew(
@@ -26,7 +28,7 @@ llvm::Function* CreateTypeValidator(
     const std::unordered_map<std::string, llvm::Function*>& functions,
     const std::string& suffix = "");
 
-std::unordered_map<std::string, llvm::Function*> GenerateFunctionDeclarations(llvm::IRBuilder<>* builder, llvm::Module* module, bool useExisting);
+std::unordered_map<std::string, llvm::Function*> GetFunctionAddresses(llvm::IRBuilder<>* builder, llvm::Module* module);
 
 llvm::orc::ThreadSafeModule FinalizeModule(std::unique_ptr<llvm::Module> module, std::unique_ptr<llvm::LLVMContext> context);
 
