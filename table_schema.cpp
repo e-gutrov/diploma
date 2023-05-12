@@ -4,6 +4,8 @@
 #include "table_schema.h"
 #include "exceptions.h"
 
+// TODO: think about refactoring
+
 StructFieldPtr MakeStructField(std::string name, TypeBasePtr schema, bool optional) {
     auto result = std::make_shared<StructField>();
     result->Name = name;

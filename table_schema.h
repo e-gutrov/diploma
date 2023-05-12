@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 
+// TODO: think about refactoring
+
 enum class ValueType {
     Int,
     String,

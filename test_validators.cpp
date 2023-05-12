@@ -16,6 +16,8 @@
 #include "jsoncons_cursor_validator.h"
 #include "yson_cursor_validator.h"
 
+// TODO: check&refactor contents
+
 void testJsonconsValidation(const std::vector<std::pair<std::string, bool>>& tests, const jsoncons::json& jsonSchema) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
     jsoncons::jsonschema::json_validator<jsoncons::json> validator(schema);
@@ -71,7 +73,7 @@ void testJsonLlvmValidation(const std::vector<std::pair<std::string, bool>>& tes
 }
 
 void testYsonCursorValidation(const std::vector<std::pair<std::string, bool>>& tests, const TypeBasePtr& type) {
-    auto validator = CreateYsonCursorValidator(type);
+    auto validator = YsonValidators::CreatePolymorphicValidator(type);
     for (const auto& [json, expected] : tests) {
         auto yson = ConvertJsonToYson(json);
         INFO("YSON is: " << yson);

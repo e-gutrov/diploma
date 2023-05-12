@@ -5,10 +5,12 @@
 
 using namespace jsoncons;
 
-jsoncons::json generateTypeJson(const std::string& type) {
-    jsoncons::json result;
-    result["type"] = type;
-    return result;
+namespace {
+    jsoncons::json generateTypeJson(const std::string &type) {
+        jsoncons::json result;
+        result["type"] = type;
+        return result;
+    }
 }
 
 jsoncons::json GenerateJsonSchema(const TypeBasePtr& type) {
@@ -46,7 +48,6 @@ jsoncons::json GenerateJsonSchema(const TypeBasePtr& type) {
         }
         case ValueType::Object: {
             auto result = generateTypeJson("object");
-//            result["properties"] = jsoncons::json();
             std::vector<std::string> required;
             for (const auto& child : type->Children()) {
                 result["properties"][child->Name] = GenerateJsonSchema(child->Schema);
@@ -59,6 +60,6 @@ jsoncons::json GenerateJsonSchema(const TypeBasePtr& type) {
             return result;
         }
         default:
-            assert(false);
+            assert(0);
     }
 }

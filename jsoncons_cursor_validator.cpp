@@ -1,6 +1,8 @@
 #include "jsoncons_cursor_validator.h"
 #include "table_schema.h"
 
+// TODO: think about refactoring
+
 namespace {
     class SimpleJsonconsValidator : public JsonconsCursorValidator {
     public:

@@ -2,34 +2,16 @@
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/IRReader/IRReader.h>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/SourceMgr.h>
 
+#include <ytsaurus/yt/yt/core/yson/pull_parser.h>
+
 #include "yson_validators_llvm.h"
 #include "helpers.h"
 
 namespace YsonValidators {
-    NYT::NYson::TYsonPullParserCursor* toYsonCursor(void* ptr) {
-        return reinterpret_cast<NYT::NYson::TYsonPullParserCursor*>(ptr);
-    }
-
-    bool IsDone(void* ptr) {
-        auto cursor = toYsonCursor(ptr);
-        return cursor->GetCurrent().IsEndOfStream();
-    }
-
-    NYT::NYson::EYsonItemType GetCurrentType(void* ptr) {
-        auto cursor = toYsonCursor(ptr);
-        return cursor->GetCurrent().GetType();
-    }
-
-    void CallNext(void* ptr) {
-        auto cursor = toYsonCursor(ptr);
-        cursor->Next();
-    }
-
     int FillWithEvents(int8_t* arr, int capacity, void* c) {
-//        printf("FillWithEvents called, capacity=%d\n", capacity);
-        auto cursor = toYsonCursor(c);
+        auto cursor = reinterpret_cast<NYT::NYson::TYsonPullParserCursor*>(c);
         int res = 0;
-        int8_t result[1000];
+        int8_t result[1000]; // TODO: refactor this, memcpy is likely not needed
         while (res < capacity && !cursor->GetCurrent().IsEndOfStream()) {
             result[res++] = static_cast<int8_t>(cursor->GetCurrent().GetType());
             cursor->Next();
@@ -38,17 +20,17 @@ namespace YsonValidators {
             result[res++] = -1;
         }
         memcpy(arr, result, res);
-//        printf("FillWithEvents finished, res=%d\n", res);
         return res;
     }
 
+    // TODO: this code is completely the same as in JSON, share it
     llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema) {
         auto context = std::make_unique<llvm::LLVMContext>();
         llvm::IRBuilder<> builder(*context);
         llvm::SMDiagnostic err;
-//        auto module = std::make_unique<llvm::Module>("validating_module", *context);
+        // TODO: make path more accurate
         auto module = llvm::parseIRFile("/home/egor/CLionProjects/coursework/llvm-ir-helpers/llvm_yson_helpers.ll", err, *context);
-        auto functions = GenerateFunctionDeclarations(&builder, module.get(), true);
+        auto functions = GetFunctionAddresses(&builder, module.get());
 
         auto validateRoot = CreateTypeValidatorNew(schema, context.get(), &builder, module.get(), functions);
 
@@ -69,8 +51,7 @@ namespace YsonValidators {
 
         auto callValidateRoot = builder.CreateCall(validateRoot, {arr, next, size, capacity, mainFunc->arg_begin()});
         llvm::Value* validateResult = callValidateRoot;
-        auto callIsDone = builder.CreateCall(functions.at("IsDone"), {arr, next});
-        llvm::Value* isDone = callIsDone;
+        auto isDone = builder.CreateCall(functions.at("IsDone"), {arr, next});
 
         auto result = builder.CreateAnd(validateResult, isDone);
         builder.CreateRet(result);

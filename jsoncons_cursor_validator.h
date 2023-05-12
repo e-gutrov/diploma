@@ -5,6 +5,8 @@
 
 #include "table_schema.h"
 
+// TODO: think about refactoring
+
 class JsonconsCursorValidator {
 public:
     virtual bool Validate(jsoncons::json_cursor*) = 0;
