@@ -4,6 +4,8 @@
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <ytsaurus/contrib/libs/llvm16/include/llvm/Support/TargetSelect.h>
 
+#include <nanobench/nanobench.h>
+
 #include <util/stream/mem.h>
 
 #include "table_schema.h"
@@ -246,11 +248,30 @@ void benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(int elems, int
     runAllBenchmarks("List of tuples of string, int, and optional list of optional strings", data, schema, iterations);
 }
 
+int SomeFunction(int x) {
+    return x + 5;
+}
+
+void f() {
+    ankerl::nanobench::Bench().run("SomeFunction 7", [&] () {
+        ankerl::nanobench::doNotOptimizeAway(SomeFunction(7));
+    });
+}
+
 int main() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
+    ankerl::nanobench::Bench().run("SomeFunction 5", [&] () {
+        ankerl::nanobench::doNotOptimizeAway(SomeFunction(5));
+    });
+
+    ankerl::nanobench::Bench().run("SomeFunction 6", [&] () {
+        ankerl::nanobench::doNotOptimizeAway(SomeFunction(6));
+    });
+
+    f();
     int mul = 5;
     for (auto elems : {1000}) {
 //    for (auto elems : {0, 1, 10, 50, 100, 1000}) {

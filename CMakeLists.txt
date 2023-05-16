@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-fno-omit-frame-pointer)
 add_compile_options(-mno-omit-leaf-frame-pointer)
 
-include_directories(include
+include_directories(
+    include
     ${PROJECT_SOURCE_DIR}/include/ytsaurus
     ${PROJECT_SOURCE_DIR}/include/ytsaurus/contrib/libs/llvm16/include
 )
@@ -73,6 +74,7 @@ add_executable(benchmarks
     jsoncons_cursor_validator.cpp
     yson_cursor_validator.cpp
     yson_validators_llvm.cpp
+    include/nanobench/nanobench.cpp
 )
 
 target_link_libraries(benchmarks PUBLIC
