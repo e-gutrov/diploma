@@ -1,4 +1,4 @@
-#include <chrono>
+#include <ctime>
 
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
@@ -20,16 +20,19 @@
 
 class Timer {
 public:
-    Timer(const std::string& name = ""): Start_(std::chrono::high_resolution_clock::now()), Name_(name) {}
+    Timer(const std::string& name): Start_(std::clock()), SecondsCompiled_(0), Name_(name) {}
 
     double SecondsElapsed() const {
-        auto now = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(now - Start_);
-        return elapsed.count()  * 1e-9;
+        auto now = std::clock();
+        return 1.0 * (now - Start_) / CLOCKS_PER_SEC;
+    }
+
+    void OnModuleCompiled() {
+        SecondsCompiled_ = SecondsElapsed();
     }
 
     void PrintElapsed(const std::string& s) const {
-        std::cout << s << ',' << SecondsElapsed() << std::endl;
+        std::cout << s << ',' << SecondsElapsed() - SecondsCompiled_ << ',' << SecondsCompiled_ << std::endl;
     }
 
     ~Timer() {
@@ -37,14 +40,15 @@ public:
     }
 
 private:
-    std::chrono::high_resolution_clock::time_point Start_;
+    std::clock_t Start_;
+    double SecondsCompiled_;
     std::string Name_;
 };
 
-void benchJsonconsValidation(const std::string& data, const jsoncons::json& jsonSchema, int iterations) {
+void benchJsonconsValidation(const std::string& schemaName, const std::string& data, const jsoncons::json& jsonSchema, int iterations) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
     jsoncons::jsonschema::json_validator<jsoncons::json> validator(schema);
-    Timer t("jsoncons");
+    Timer t(schemaName + "," + "jsoncons");
     int res = 0;
     auto jsonObj = jsoncons::json::parse(data);
     for (int i = 0; i < iterations; ++i) {
@@ -52,9 +56,9 @@ void benchJsonconsValidation(const std::string& data, const jsoncons::json& json
     }
 }
 
-void benchJsonconsCursorValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
+void benchJsonconsCursorValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type, int iterations) {
     auto validator = CreateJsonconsCursorValidator(type);
-    Timer t("poly jsoncons cursor");
+    Timer t(schemaName + "," + "poly jsoncons");
     int res = 0;
     for (int i = 0; i < iterations; ++i) {
         jsoncons::json_cursor cursor(data);
@@ -62,11 +66,11 @@ void benchJsonconsCursorValidation(const std::string& data, const TypeBasePtr& t
     }
 }
 
-void benchRapidJsonValidation(const std::string& data, const std::string& schemaStr, int iterations) {
+void benchRapidJsonValidation(const std::string& schemaName, const std::string& data, const std::string& schemaStr, int iterations) {
     rapidjson::Document d;
     d.Parse(schemaStr.c_str());
     rapidjson::SchemaDocument sd(d);
-    Timer t("RapidJSON");
+    Timer t(schemaName + "," + "RapidJSON");
     int res = 0;
     rapidjson::SchemaValidator validator(sd);
     for (int i = 0; i < iterations; ++i) {
@@ -80,8 +84,9 @@ void benchRapidJsonValidation(const std::string& data, const std::string& schema
     }
 }
 
-void benchJsonLlvmValidation(const std::string& data, const TypeBasePtr& type, int iterations) {
+void benchJsonLlvmValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type, int iterations) {
     auto jit = PrepareJit(PrepareJitFor::Json, false);
+    Timer t(schemaName + "," + "LLVM JSON");
     if (auto err = jit->addIRModule(JsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }
@@ -90,34 +95,28 @@ void benchJsonLlvmValidation(const std::string& data, const TypeBasePtr& type, i
         std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
-        int res = -1;
-        {
-            jsoncons::json_cursor cursor(data);
-            res += func(&cursor);
-        }
-        Timer t("LLVM JSON");
+        t.OnModuleCompiled();
         for (int i = 0; i < iterations; ++i) {
             jsoncons::json_cursor cursor(data);
-            res += func(&cursor);
+            func(&cursor);
         }
-        std::cerr << "LLVM JSON, res = " << res << std::endl;
     }
 }
 
-void benchYsonValidation(const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
+void benchYsonValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
     auto validator = YsonValidators::CreatePolymorphicValidator(type);
-    Timer t("poly YSON cursor");
-    int res = 0;
+    Timer t(schemaName + "," + "poly YSON");
     for (int i = 0; i < iterations; ++i) {
         TMemoryInput memoryInput(data);
         NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
         NYT::NYson::TYsonPullParserCursor cursor(&parser);
-        res += validator->Validate(&cursor);
+        validator->Validate(&cursor);
     }
 }
 
-void benchYsonLlvmValidation(const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
+void benchYsonLlvmValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type, int iterations, const std::string& format) {
     auto jit = PrepareJit(PrepareJitFor::Yson, false);
+    Timer t(schemaName + "," + "LLVM YSON");
     if (auto err = jit->addIRModule(YsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
     }
@@ -126,13 +125,12 @@ void benchYsonLlvmValidation(const std::string& data, const TypeBasePtr& type, i
         std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
-        int res = 0;
-        Timer t("LLVM YSON");
+        t.OnModuleCompiled();
         for (int i = 0; i < iterations; ++i) {
             TMemoryInput memoryInput(data);
             NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
             NYT::NYson::TYsonPullParserCursor cursor(&parser);
-            res += func(&cursor);
+            func(&cursor);
         }
     }
 }
@@ -144,20 +142,17 @@ void runAllBenchmarks(
         int iterations) {
     auto jsonSchema = GenerateJsonSchema(schema);
 
-    std::cout << schemaName << "\n=====================\n";
     for (const auto& [name, data] : inputs) {
-        std::cout << name << "\n=====================\n";
-//        benchJsonconsValidation(data, jsonSchema, iterations);
-//        benchJsonconsCursorValidation(data, schema, iterations);
-//        benchRapidJsonValidation(data, jsonSchema.to_string(), iterations);
-//        benchJsonLlvmValidation(data, schema, iterations);
+        auto caseName = schemaName + ";" + name;
+//        benchJsonconsValidation(caseName, data, jsonSchema, iterations);
+//        benchJsonconsCursorValidation(caseName, data, schema, iterations);
+//        benchRapidJsonValidation(caseName, data, jsonSchema.to_string(), iterations);
+//        benchJsonLlvmValidation(caseName, data, schema, iterations);
         auto ysonBinary = ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary);
-        benchYsonValidation(ysonBinary, schema, iterations, "binary");
-//        benchYsonValidation(yson, schema, iterations, "text");
-        benchYsonLlvmValidation(ysonBinary, schema, iterations, "binary");
-        std::cout << "=====================\n";
+        benchYsonValidation(caseName, ysonBinary, schema, iterations, "binary");
+//        benchYsonValidation(caseName, yson, schema, iterations, "text");
+        benchYsonLlvmValidation(caseName, ysonBinary, schema, iterations, "binary");
     }
-    std::cout << "\n\n";
 }
 
 std::string createListOfTokens(int elems, const std::string& token) {
@@ -256,13 +251,27 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    benchListOfInts(40000, 20000);
-    benchListOfOptionalInts(40000, 8000);
-    benchListOf5xOptionalInts(40000, 10000);
-    benchListOfStrings(40000, 10000);
-    benchListOfOptionalStrings(40000, 10000);
+    int mul = 5;
+    for (auto elems : {1000}) {
+//    for (auto elems : {0, 1, 10, 50, 100, 1000}) {
+        std::cout << elems << std::endl;
+        int div = (elems == 0 ? 1 : elems);
+//        benchListOfInts(elems, mul * 8000000 / div);
+//        benchListOfOptionalInts(elems, mul * 4000000 / div);
+//        benchListOfStrings(elems, mul * 4000000 / div);
+//        benchListOfOptionalStrings(elems, mul * 4000000 / div);
+        benchListOf5xOptionalInts(elems, mul * 10000000 / div);
+        benchListOfListOfOptionalListOfInts(elems, mul * 10000000 / div);
+        benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(elems, mul * 10000000 / div);
+        std::cout << "\n\n\n";
+    }
+//    benchListOfInts(40, 4000000);
+//    benchListOfOptionalInts(40, 1600000);
+//    benchListOfStrings(40, 2000000);
+//    benchListOfOptionalStrings(40, 2000000);
 
-    benchListOfListOfOptionalListOfInts(4000, 10000);
-    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40000, 1000);
+    //    benchListOf5xOptionalInts(40, 10000000);
+//    benchListOfListOfOptionalListOfInts(40, 1000000);
+//    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40, 1000000);
     return 0;
 }

@@ -11,15 +11,13 @@ namespace YsonValidators {
     int FillWithEvents(int8_t* arr, int capacity, void* c) {
         auto cursor = reinterpret_cast<NYT::NYson::TYsonPullParserCursor*>(c);
         int res = 0;
-        int8_t result[1000]; // TODO: refactor this, memcpy is likely not needed
         while (res < capacity && !cursor->GetCurrent().IsEndOfStream()) {
-            result[res++] = static_cast<int8_t>(cursor->GetCurrent().GetType());
+            arr[res++] = static_cast<int8_t>(cursor->GetCurrent().GetType());
             cursor->Next();
         }
         if (res < capacity) {
-            result[res++] = -1;
+            arr[res++] = -1;
         }
-        memcpy(arr, result, res);
         return res;
     }
 
