@@ -1,20 +1,20 @@
 #ifndef COURSEWORK_YSON_CURSOR_VALIDATOR_H
 #define COURSEWORK_YSON_CURSOR_VALIDATOR_H
 
-#include <yt/yt/core/yson/pull_parser.h>
-
 #include "table_schema.h"
+
+#include <yt/yt/core/yson/pull_parser.h>
 
 namespace YsonValidators {
 class PolymorphicValidator {
 public:
-  virtual bool Validate(NYT::NYson::TYsonPullParserCursor *) = 0;
+    virtual bool Validate(NYT::NYson::TYsonPullParserCursor*) = 0;
 
-  virtual ~PolymorphicValidator() = default;
+    virtual ~PolymorphicValidator() = default;
 };
 
 std::unique_ptr<PolymorphicValidator>
-CreatePolymorphicValidator(const TypeBasePtr &schema, int depth = 0);
+CreatePolymorphicValidator(const TypeBasePtr& schema, int depth = 0);
 } // namespace YsonValidators
 
 #endif // COURSEWORK_YSON_CURSOR_VALIDATOR_H
