@@ -9,10 +9,11 @@
 
 class JsonconsCursorValidator {
 public:
-    virtual bool Validate(jsoncons::json_cursor*) = 0;
-    virtual ~JsonconsCursorValidator() = default;
+  virtual bool Validate(jsoncons::json_cursor *) = 0;
+  virtual ~JsonconsCursorValidator() = default;
 };
 
-std::unique_ptr<JsonconsCursorValidator> CreateJsonconsCursorValidator(const TypeBasePtr& schema, int depth = 0);
+std::unique_ptr<JsonconsCursorValidator>
+CreateJsonconsCursorValidator(const TypeBasePtr &schema, int depth = 0);
 
-#endif //COURSEWORK_JSONCONS_CURSOR_VALIDATOR_H
+#endif // COURSEWORK_JSONCONS_CURSOR_VALIDATOR_H

@@ -3,7 +3,7 @@
 
 class TypeError : public std::logic_error {
 public:
-    TypeError(const char *msg);
+  TypeError(const char *msg);
 };
 
-#endif //COURSEWORK_EXCEPTIONS_H
+#endif // COURSEWORK_EXCEPTIONS_H

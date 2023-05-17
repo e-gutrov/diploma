@@ -6,9 +6,10 @@
 #include "table_schema.h"
 
 namespace YsonValidators {
-    int FillWithEvents(int8_t* arr, int capacity, void* c);
+int FillWithEvents(int8_t *arr, int capacity, void *c);
 
-    llvm::orc::ThreadSafeModule CreateTableSchemaValidator(const TypeBasePtr& schema);
-}
+llvm::orc::ThreadSafeModule
+CreateTableSchemaValidator(const TypeBasePtr &schema);
+} // namespace YsonValidators
 
-#endif //COURSEWORK_YSON_VALIDATORS_LLVM_H
+#endif // COURSEWORK_YSON_VALIDATORS_LLVM_H

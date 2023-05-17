@@ -6,14 +6,15 @@
 #include "table_schema.h"
 
 namespace YsonValidators {
-    class PolymorphicValidator {
-    public:
-        virtual bool Validate(NYT::NYson::TYsonPullParserCursor *) = 0;
+class PolymorphicValidator {
+public:
+  virtual bool Validate(NYT::NYson::TYsonPullParserCursor *) = 0;
 
-        virtual ~PolymorphicValidator() = default;
-    };
+  virtual ~PolymorphicValidator() = default;
+};
 
-    std::unique_ptr<PolymorphicValidator> CreatePolymorphicValidator(const TypeBasePtr &schema, int depth = 0);
-}
+std::unique_ptr<PolymorphicValidator>
+CreatePolymorphicValidator(const TypeBasePtr &schema, int depth = 0);
+} // namespace YsonValidators
 
-#endif //COURSEWORK_YSON_CURSOR_VALIDATOR_H
+#endif // COURSEWORK_YSON_CURSOR_VALIDATOR_H
