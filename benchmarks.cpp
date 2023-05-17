@@ -21,6 +21,8 @@
 
 // TODO: think about refactoring
 
+const int BATCH_SIZE = 100'000;
+
 void benchJsonconsValidation(const std::string& schemaName, const std::string& data, const jsoncons::json& jsonSchema) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
     jsoncons::jsonschema::json_validator<jsoncons::json> validator(schema);
@@ -177,34 +179,35 @@ std::string createListOfAlternatingTokens(int elems, const std::string& tokenEve
 void benchListOfInts(int elems) {
     GeneratorBase g;
     auto schema = CreateList(CreateSimple(ValueType::Int));
-    std::vector<std::pair<std::string, std::string>> data{
-//        {"Basic", createListOfTokens(elems, "123")},
-        {"Random", GenerateObjectWithSchema(schema, &g)}};
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+        {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)}};
     runAllBenchmarks("List of ints", data, schema);
 }
 
 void benchListOfOptionalInts(int elems) {
     GeneratorBase g;
+    ConstForOptionsGenerator alwaysNull(true);
+    ConstForOptionsGenerator alwaysSome(false);
     auto schema = CreateList(CreateOptional(CreateSimple(ValueType::Int)));
-    std::vector<std::pair<std::string, std::string>> data{
-        {"All nulls", createListOfTokens(elems, "null")},
-//        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
-        {"All ints", createListOfTokens(elems, "123")},
-        {"Random", GenerateObjectWithSchema(schema, &g)},
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+        {"All nulls", GenerateObjectWithSchema(schema, &alwaysNull, BATCH_SIZE)},
+        {"All ints", GenerateObjectWithSchema(schema, &alwaysSome, BATCH_SIZE)},
+        {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)},
     };
     runAllBenchmarks("List of optional ints", data, schema);
 }
 
 void benchListOf5xOptionalInts(int elems) {
     GeneratorBase g;
+    ConstForOptionsGenerator alwaysNull(true);
+    ConstForOptionsGenerator alwaysSome(false);
     auto schema = CreateList(
             CreateOptional(CreateOptional(CreateOptional(CreateOptional(CreateOptional(
                     CreateSimple(ValueType::Int)))))));
-    std::vector<std::pair<std::string, std::string>> data{
-        {"All nulls", createListOfTokens(elems, "null")},
-//        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
-        {"All ints", createListOfTokens(elems, "123")},
-        {"Random", GenerateObjectWithSchema(schema, &g)},
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+        {"All nulls", GenerateObjectWithSchema(schema, &alwaysNull, BATCH_SIZE)},
+        {"All ints", GenerateObjectWithSchema(schema, &alwaysSome, BATCH_SIZE)},
+        {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)},
     };
     runAllBenchmarks("List of optional x5 ints", data, schema);
 }
@@ -212,21 +215,21 @@ void benchListOf5xOptionalInts(int elems) {
 void benchListOfStrings(int elems) {
     GeneratorBase g;
     auto schema = CreateList(CreateSimple(ValueType::String));
-    std::vector<std::pair<std::string, std::string>> data{
-//        {"Basic", createListOfTokens(elems, "\"abracadabra\"")},
-        {"Random", GenerateObjectWithSchema(schema, &g)},
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+        {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)},
     };
     runAllBenchmarks("List of strings", data, schema);
 }
 
 void benchListOfOptionalStrings(int elems) {
     GeneratorBase g;
+    ConstForOptionsGenerator alwaysNull(true);
+    ConstForOptionsGenerator alwaysSome(false);
     auto schema = CreateList(CreateOptional(CreateSimple(ValueType::String)));
-    std::vector<std::pair<std::string, std::string>> data{
-//            {"All nulls", createListOfTokens(elems, "null")},
-//            {"Every other null", createListOfAlternatingTokens(elems, "null", "\"abracadabra\"")},
-//            {"All strings", createListOfTokens(elems, "\"abracadabra\"")},
-            {"Random", GenerateObjectWithSchema(schema, &g)},
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+            {"All nulls", GenerateObjectWithSchema(schema, &alwaysNull, BATCH_SIZE)},
+            {"All strings", GenerateObjectWithSchema(schema, &alwaysSome, BATCH_SIZE)},
+            {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)},
     };
     runAllBenchmarks("List of optional strings", data, schema);
 }
@@ -234,9 +237,9 @@ void benchListOfOptionalStrings(int elems) {
 void benchListOfListOfOptionalListOfInts(int elems) {
     GeneratorBase g;
     auto schema = CreateList(CreateList(CreateOptional(CreateList(CreateSimple(ValueType::Int)))));
-    std::vector<std::pair<std::string, std::string>> data{
-        {"Basic", createListOfAlternatingTokens(elems, "[[1, 2, 3], [], null]", "[[]]")},
-        {"Random", GenerateObjectWithSchema(schema, &g)},
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+        {"Basic", {createListOfAlternatingTokens(elems, "[[1, 2, 3], [], null]", "[[]]")}},
+        {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)},
     };
     runAllBenchmarks("List of list of list of ints", data, schema);
 }
@@ -247,12 +250,8 @@ void benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(int elems) {
          CreateSimple(ValueType::String),
          CreateSimple(ValueType::Int),
          CreateOptional(CreateList(CreateOptional(CreateSimple(ValueType::String))))}));
-    std::vector<std::pair<std::string, std::string>> data{
-//            {"Basic", createListOfAlternatingTokens(
-//                    elems,
-//                    R"(["abra", 12, ["cadabra", "second"]])",
-//                    R"(["abra", 12, [null, "second"]])")},
-            {"Random", GenerateObjectWithSchema(schema, &g)},
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+        {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)},
     };
     runAllBenchmarks("List of tuples of string, int, and optional list of optional strings", data, schema);
 }

@@ -4,6 +4,7 @@
 
 // TODO: think about refactoring
 
+// TODO: maybe this should be modular
 class GeneratorBase {
 public:
     GeneratorBase();
@@ -14,6 +15,15 @@ public:
 
 private:
     std::mt19937 Generator_;
+};
+
+class ConstForOptionsGenerator : public GeneratorBase {
+public:
+    ConstForOptionsGenerator(bool c);
+    bool GenerateIsNull() override;
+
+private:
+    bool Const_;
 };
 
 std::vector<std::string> GenerateObjectWithSchema(const TypeBasePtr&, GeneratorBase*, int minSize);
