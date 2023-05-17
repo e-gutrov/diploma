@@ -7,7 +7,9 @@ add_compile_options(-fno-omit-frame-pointer)
 add_compile_options(-mno-omit-leaf-frame-pointer)
 
 include_directories(
-    include
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include/rapidjson/include
+    ${PROJECT_SOURCE_DIR}/include/jsoncons/include
     ${PROJECT_SOURCE_DIR}/include/ytsaurus
     ${PROJECT_SOURCE_DIR}/include/ytsaurus/contrib/libs/llvm16/include
 )
