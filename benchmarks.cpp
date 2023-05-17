@@ -17,6 +17,7 @@
 #include "rapidjson/schema.h"
 #include "jsoncons_cursor_validator.h"
 #include "yson_cursor_validator.h"
+#include "benchmark_helpers.h"
 
 // TODO: think about refactoring
 
@@ -28,15 +29,21 @@ void benchJsonconsValidation(const std::string& schemaName, const std::string& d
     ankerl::nanobench::Bench().run("jsoncons " + schemaName, [&] () {
         res += validator.is_valid(jsonObj);
     });
+    if (res == 0) {
+        assert(0);
+    }
 }
 
 void benchJsonconsCursorValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type) {
     auto validator = CreateJsonconsCursorValidator(type);
     int res = 0;
-    ankerl::nanobench::Bench().run("poly jsoncons " + schemaName, [&] () {
+    ankerl::nanobench::Bench().minEpochIterations(40000).epochs(10).run("poly jsoncons " + schemaName, [&] () {
         jsoncons::json_cursor cursor(data);
         res += validator->Validate(&cursor);
     });
+    if (res == 0) {
+        assert(0);
+    }
 }
 
 void benchRapidJsonValidation(const std::string& schemaName, const std::string& data, const std::string& schemaStr) {
@@ -54,6 +61,9 @@ void benchRapidJsonValidation(const std::string& schemaName, const std::string& 
         res += validator.IsValid();
         validator.Reset();
     });
+    if (res == 0) {
+        assert(0);
+    }
 }
 
 void benchJsonLlvmValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type) {
@@ -65,25 +75,35 @@ void benchJsonLlvmValidation(const std::string& schemaName, const std::string& d
     if (!sym) {
         std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
     } else {
+        int res = 0;
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
-        ankerl::nanobench::Bench().run("JSON LLVM " + schemaName, [&] () {
+        ankerl::nanobench::Bench().minEpochIterations(40000).epochs(10).run("JSON LLVM " + schemaName, [&] () {
             jsoncons::json_cursor cursor(data);
-            func(&cursor);
+            res += func(&cursor);
         });
+        if (res == 0) {
+            assert(0);
+        }
     }
 }
 
-void benchYsonValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type, const std::string& format) {
+void benchYsonValidation(const std::string& schemaName, const std::vector<std::string>& data, const TypeBasePtr& type, const std::string& format) {
     auto validator = YsonValidators::CreatePolymorphicValidator(type);
+    int res = 0;
     ankerl::nanobench::Bench().run("YSON polymorphic " + schemaName, [&] () {
-        TMemoryInput memoryInput(data);
-        NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
-        NYT::NYson::TYsonPullParserCursor cursor(&parser);
-        validator->Validate(&cursor);
+        for (const auto& row : data) {
+            TMemoryInput memoryInput(row);
+            NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+            NYT::NYson::TYsonPullParserCursor cursor(&parser);
+            res += validator->Validate(&cursor);
+        }
     });
+    if (res == 0) {
+        assert(0);
+    }
 }
 
-void benchYsonLlvmValidation(const std::string& schemaName, const std::string& data, const TypeBasePtr& type, const std::string& format) {
+void benchYsonLlvmValidation(const std::string& schemaName, const std::vector<std::string>& data, const TypeBasePtr& type, const std::string& format) {
     auto jit = PrepareJit(PrepareJitFor::Yson, false);
     if (auto err = jit->addIRModule(YsonValidators::CreateTableSchemaValidator(type))) {
         std::cout << toString(std::move(err)) << std::endl;
@@ -93,31 +113,40 @@ void benchYsonLlvmValidation(const std::string& schemaName, const std::string& d
         std::cerr << "no sym " << toString(sym.takeError()) << std::endl;
     } else {
         auto func = reinterpret_cast<bool(*)(void*)>(sym.get().getValue());
+        int res = 0;
         ankerl::nanobench::Bench().run("YSON LLVM " + schemaName, [&] () {
-            TMemoryInput memoryInput(data);
-            NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
-            NYT::NYson::TYsonPullParserCursor cursor(&parser);
-            func(&cursor);
+            for (const auto& row : data) {
+                TMemoryInput memoryInput(row);
+                NYT::NYson::TYsonPullParser parser(&memoryInput, NYT::NYson::EYsonType::Node);
+                NYT::NYson::TYsonPullParserCursor cursor(&parser);
+                res += func(&cursor);
+            }
         });
+        if (res == 0) {
+            assert(0);
+        }
     }
 }
 
 void runAllBenchmarks(
         const std::string& schemaName,
-        const std::vector<std::pair<std::string, std::string>>& inputs,
+        const std::vector<std::pair<std::string, std::vector<std::string>>>& inputs,
         const TypeBasePtr& schema) {
     auto jsonSchema = GenerateJsonSchema(schema);
 
     for (const auto& [name, data] : inputs) {
         auto caseName = schemaName + ";" + name;
-        benchJsonconsValidation(caseName, data, jsonSchema);
-        benchJsonconsCursorValidation(caseName, data, schema);
-        benchRapidJsonValidation(caseName, data, jsonSchema.to_string());
-        benchJsonLlvmValidation(caseName, data, schema);
-        auto ysonBinary = ConvertJsonToYson(data, NYT::NYson::EYsonFormat::Binary);
-        benchYsonValidation(caseName, ysonBinary, schema, "binary");
+//        benchJsonconsValidation(caseName, data, jsonSchema);
+//        benchJsonconsCursorValidation(caseName, data, schema);
+//        benchRapidJsonValidation(caseName, data, jsonSchema.to_string());
+//        benchJsonLlvmValidation(caseName, data, schema);
+        std::vector<std::string> ysonBinaryData;
+        for (const auto& json : data) {
+            ysonBinaryData.emplace_back(ConvertJsonToYson(json, NYT::NYson::EYsonFormat::Binary));
+        }
+        benchYsonValidation(caseName, ysonBinaryData, schema, "binary");
 //        benchYsonValidation(caseName, yson, schema, iterations, "text");
-        benchYsonLlvmValidation(caseName, ysonBinary, schema, "binary");
+        benchYsonLlvmValidation(caseName, ysonBinaryData, schema, "binary");
     }
 }
 
@@ -146,70 +175,90 @@ std::string createListOfAlternatingTokens(int elems, const std::string& tokenEve
 }
 
 void benchListOfInts(int elems) {
+    GeneratorBase g;
     auto schema = CreateList(CreateSimple(ValueType::Int));
-    std::vector<std::pair<std::string, std::string>> data{{"Basic", jsoncons::json(std::vector<int>(elems)).to_string()}};
+    std::vector<std::pair<std::string, std::string>> data{
+//        {"Basic", createListOfTokens(elems, "123")},
+        {"Random", GenerateObjectWithSchema(schema, &g)}};
     runAllBenchmarks("List of ints", data, schema);
 }
 
 void benchListOfOptionalInts(int elems) {
+    GeneratorBase g;
     auto schema = CreateList(CreateOptional(CreateSimple(ValueType::Int)));
     std::vector<std::pair<std::string, std::string>> data{
         {"All nulls", createListOfTokens(elems, "null")},
-        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
+//        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
         {"All ints", createListOfTokens(elems, "123")},
+        {"Random", GenerateObjectWithSchema(schema, &g)},
     };
     runAllBenchmarks("List of optional ints", data, schema);
 }
 
 void benchListOf5xOptionalInts(int elems) {
+    GeneratorBase g;
     auto schema = CreateList(
             CreateOptional(CreateOptional(CreateOptional(CreateOptional(CreateOptional(
                     CreateSimple(ValueType::Int)))))));
     std::vector<std::pair<std::string, std::string>> data{
         {"All nulls", createListOfTokens(elems, "null")},
-        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
+//        {"Every other null", createListOfAlternatingTokens(elems, "null", "123")},
         {"All ints", createListOfTokens(elems, "123")},
+        {"Random", GenerateObjectWithSchema(schema, &g)},
     };
     runAllBenchmarks("List of optional x5 ints", data, schema);
 }
 
 void benchListOfStrings(int elems) {
+    GeneratorBase g;
     auto schema = CreateList(CreateSimple(ValueType::String));
     std::vector<std::pair<std::string, std::string>> data{
-        {"Basic", createListOfTokens(elems, "\"abracadabra\"")},
+//        {"Basic", createListOfTokens(elems, "\"abracadabra\"")},
+        {"Random", GenerateObjectWithSchema(schema, &g)},
     };
     runAllBenchmarks("List of strings", data, schema);
 }
 
 void benchListOfOptionalStrings(int elems) {
+    GeneratorBase g;
     auto schema = CreateList(CreateOptional(CreateSimple(ValueType::String)));
     std::vector<std::pair<std::string, std::string>> data{
-            {"All nulls", createListOfTokens(elems, "null")},
-            {"Every other null", createListOfAlternatingTokens(elems, "null", "\"abracadabra\"")},
-            {"All strings", createListOfTokens(elems, "\"abracadabra\"")},
+//            {"All nulls", createListOfTokens(elems, "null")},
+//            {"Every other null", createListOfAlternatingTokens(elems, "null", "\"abracadabra\"")},
+//            {"All strings", createListOfTokens(elems, "\"abracadabra\"")},
+            {"Random", GenerateObjectWithSchema(schema, &g)},
     };
     runAllBenchmarks("List of optional strings", data, schema);
 }
 
 void benchListOfListOfOptionalListOfInts(int elems) {
+    GeneratorBase g;
     auto schema = CreateList(CreateList(CreateOptional(CreateList(CreateSimple(ValueType::Int)))));
     std::vector<std::pair<std::string, std::string>> data{
         {"Basic", createListOfAlternatingTokens(elems, "[[1, 2, 3], [], null]", "[[]]")},
+        {"Random", GenerateObjectWithSchema(schema, &g)},
     };
     runAllBenchmarks("List of list of list of ints", data, schema);
 }
 
 void benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(int elems) {
+    GeneratorBase g;
     auto schema = CreateList(CreateTuple({
          CreateSimple(ValueType::String),
          CreateSimple(ValueType::Int),
          CreateOptional(CreateList(CreateOptional(CreateSimple(ValueType::String))))}));
     std::vector<std::pair<std::string, std::string>> data{
-            {"Basic", createListOfAlternatingTokens(
-                    elems,
-                    R"(["abra", 12, ["cadabra", "second"]])",
-                    R"(["abra", 12, [null, "second"]])")}};
+//            {"Basic", createListOfAlternatingTokens(
+//                    elems,
+//                    R"(["abra", 12, ["cadabra", "second"]])",
+//                    R"(["abra", 12, [null, "second"]])")},
+            {"Random", GenerateObjectWithSchema(schema, &g)},
+    };
     runAllBenchmarks("List of tuples of string, int, and optional list of optional strings", data, schema);
+}
+
+int SomeFunc(int x) {
+    return x + 5;
 }
 
 int main() {
@@ -217,13 +266,17 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
+    ankerl::nanobench::Bench().run("SomeFunc", [&] () {
+        ankerl::nanobench::doNotOptimizeAway(SomeFunc(5));
+    });
+
     benchListOfInts(40);
     benchListOfOptionalInts(40);
     benchListOfStrings(40);
     benchListOfOptionalStrings(40);
 
     benchListOf5xOptionalInts(40);
-    benchListOfListOfOptionalListOfInts(40);
+//    benchListOfListOfOptionalListOfInts(40);
     benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40);
     return 0;
 }
