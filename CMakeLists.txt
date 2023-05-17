@@ -66,6 +66,7 @@ vcs_info(tests)
 
 add_executable(benchmarks
     benchmarks.cpp
+    benchmark_helpers.cpp
     validators_jsoncons.cpp
     json_validators_llvm.cpp
     helpers.cpp
