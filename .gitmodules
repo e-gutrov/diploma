@@ -10,3 +10,6 @@
 [submodule "include/jsoncons"]
 	path = include/jsoncons
 	url = git@github.com:danielaparker/jsoncons.git
+[submodule "nanobench"]
+	path = include/nanobench
+	url = git@github.com:e-gutrov/nanobench.git

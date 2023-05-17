@@ -10,7 +10,7 @@
 
 #include <util/stream/mem.h>
 
-#include <nanobench/nanobench.h>
+#include <nanobench/src/include/nanobench.h>
 
 #include "table_schema.h"
 #include "json_validators_llvm.h"

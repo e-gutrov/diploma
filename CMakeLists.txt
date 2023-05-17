@@ -77,7 +77,7 @@ add_executable(benchmarks
     jsoncons_cursor_validator.cpp
     yson_cursor_validator.cpp
     yson_validators_llvm.cpp
-    include/nanobench/nanobench.cpp
+    include/nanobench/src/include/nanobench.cpp
 )
 
 target_link_libraries(benchmarks PUBLIC
