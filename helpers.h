@@ -22,14 +22,6 @@ llvm::Function* CreateTypeValidatorNew(
     const std::unordered_map<std::string, llvm::Function*>& functions,
     const std::string& suffix = "");
 
-llvm::Function* CreateTypeValidator(
-    const TypeBasePtr& schema,
-    llvm::LLVMContext* context,
-    llvm::IRBuilder<>* builder,
-    llvm::Module* module,
-    const std::unordered_map<std::string, llvm::Function*>& functions,
-    const std::string& suffix = "");
-
 std::unordered_map<std::string, llvm::Function*>
 GetFunctionAddresses(llvm::IRBuilder<>* builder, llvm::Module* module);
 
