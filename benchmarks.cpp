@@ -294,6 +294,25 @@ void benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(int elems) {
         schema);
 }
 
+void benchListOfTuples2() {
+    GeneratorBase g;
+
+    auto intType = CreateSimple(ValueType::Int);
+    auto stringType = CreateSimple(ValueType::String);
+    auto schema = CreateList(CreateTuple(
+        {CreateTuple({stringType, intType}),
+         CreateTuple({intType, stringType, CreateOptional(intType)}),
+         CreateTuple({intType, CreateTuple({stringType, intType}), intType})}));
+    std::vector<std::pair<std::string, std::vector<std::string>>> data{
+        {"Random", GenerateObjectWithSchema(schema, &g, BATCH_SIZE)},
+    };
+    runAllBenchmarks(
+        "list<tuple<tuple<string, int>, tuple<int, string, optional<int>>>, "
+        "tuple<int, tuple<string, int>, int>>",
+        data,
+        schema);
+}
+
 int SomeFunc(int x) {
     return x + 5;
 }
@@ -308,12 +327,13 @@ int main() {
     });
 
     benchListOfInts(40);
-    benchListOfOptionalInts(40);
-    benchListOfStrings(40);
-    benchListOfOptionalStrings(40);
-
-    benchListOf5xOptionalInts(40);
-    //    benchListOfListOfOptionalListOfInts(40);
-    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40);
+//    benchListOfOptionalInts(40);
+//    benchListOfStrings(40);
+//    benchListOfOptionalStrings(40);
+//
+//    benchListOf5xOptionalInts(40);
+//    benchListOfListOfOptionalListOfInts(40);
+//    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40);
+//    benchListOfTuples2();
     return 0;
 }
