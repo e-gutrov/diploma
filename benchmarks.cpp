@@ -6,6 +6,7 @@
 #include "validators_jsoncons.h"
 #include "yson_cursor_validator.h"
 #include "yson_validators_llvm.h"
+#include "yt_yson_validator.h"
 
 #include <ctime>
 #include <jsoncons/json.hpp>
@@ -163,6 +164,24 @@ void benchYsonLlvmValidation(
     }
 }
 
+void benchYtYsonValidation(
+        const std::string& schemaName,
+        const std::vector<std::string>& data,
+        const TypeBasePtr& type,
+        const std::string& format) {
+    auto ytType = YtLogicalTypeFromTableSchema(type);
+    int res = 0;
+    bench.run("YSON YT/" + schemaName, [&]() {
+        for (const auto& row : data) {
+            ++res;
+            NYT::NTableClient::ValidateComplexLogicalType(row, ytType);
+        }
+    });
+    if (res == 0) {
+        assert(0);
+    }
+}
+
 void runAllBenchmarks(
     const std::string& schemaName,
     const std::vector<std::pair<std::string, std::vector<std::string>>>& inputs,
@@ -171,10 +190,10 @@ void runAllBenchmarks(
 
     for (const auto& [name, data] : inputs) {
         auto caseName = schemaName + "/" + name;
-        benchJsonconsValidation(caseName, data, jsonSchema);
-        benchRapidJsonValidation(caseName, data, jsonSchema.to_string());
-        benchJsonconsCursorValidation(caseName, data, schema);
-        benchJsonLlvmValidation(caseName, data, schema);
+//        benchJsonconsValidation(caseName, data, jsonSchema);
+//        benchRapidJsonValidation(caseName, data, jsonSchema.to_string());
+//        benchJsonconsCursorValidation(caseName, data, schema);
+//        benchJsonLlvmValidation(caseName, data, schema);
         std::vector<std::string> ysonBinaryData;
         for (const auto& json : data) {
             ysonBinaryData.emplace_back(
@@ -184,6 +203,7 @@ void runAllBenchmarks(
         //        benchYsonValidation(caseName, yson, schema, iterations,
         //        "text");
         benchYsonLlvmValidation(caseName, ysonBinaryData, schema, "binary");
+        benchYtYsonValidation(caseName, ysonBinaryData, schema, "binary");
     }
 }
 
@@ -330,16 +350,16 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-//    bench.run("SomeFunc", [&]() {
-//        ankerl::nanobench::doNotOptimizeAway(SomeFunc(5));
-//    });
+    bench.run("SomeFunc", [&]() {
+        ankerl::nanobench::doNotOptimizeAway(SomeFunc(5));
+    });
 
     benchListOfInts(40);
     benchListOfOptionalInts(40);
     benchListOfStrings(40);
     benchListOfOptionalStrings(40);
 
-    benchListOf5xOptionalInts(40);
+//    benchListOf5xOptionalInts(40);
 //    benchListOfListOfOptionalListOfInts(40);
     benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40);
     benchListOfTuples2();

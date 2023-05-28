@@ -79,12 +79,14 @@ add_executable(benchmarks
     jsoncons_cursor_validator.cpp
     yson_cursor_validator.cpp
     yson_validators_llvm.cpp
+    yt_yson_validator.cpp
     include/nanobench/src/include/nanobench.cpp
 )
 
 target_link_libraries(benchmarks PUBLIC
     library-cpp-yson
     yt-yt-core
+    yt-yt-client
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen

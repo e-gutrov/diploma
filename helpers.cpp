@@ -74,10 +74,7 @@ void DoConvertJsonToYson(
             writer->OnEntity();
             break;
         }
-        case jsoncons::staj_event_type::uint64_value: {
-            writer->OnUint64Scalar(event.get<std::uint64_t>());
-            break;
-        }
+        case jsoncons::staj_event_type::uint64_value:
         case jsoncons::staj_event_type::int64_value: {
             writer->OnInt64Scalar(event.get<std::int64_t>());
             break;

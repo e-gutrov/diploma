@@ -3,7 +3,7 @@
 NYT::NTableClient::TLogicalTypePtr YtLogicalTypeFromTableSchema(const TypeBasePtr& type) {
     switch (type->GetType()) {
         case ValueType::Int: {
-            return NYT::NTableClient::SimpleLogicalType(NYT::NTableClient::ESimpleLogicalValueType::Uint64);
+            return NYT::NTableClient::SimpleLogicalType(NYT::NTableClient::ESimpleLogicalValueType::Int64);
         }
         case ValueType::String: {
             return NYT::NTableClient::SimpleLogicalType(NYT::NTableClient::ESimpleLogicalValueType::String);

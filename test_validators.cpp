@@ -145,7 +145,7 @@ TEST_CASE("Test JSON to YSON text conversion") {
     SECTION("Test list of optional ints") {
         auto json = "[1, null, null, 4]";
         auto yson = ConvertJsonToYson(json, format);
-        auto expected = "[1u;#;#;4u]";
+        auto expected = "[1;#;#;4]";
         REQUIRE(yson == expected);
     }
 
@@ -162,7 +162,7 @@ TEST_CASE("Test JSON to YSON binary conversion") {
     SECTION("Test list of optional ints") {
         auto json = "[1, null, null, 4]";
         auto yson = ConvertJsonToYson(json, format);
-        auto expected = "[\x06\x01;#;#;\x06\x04]";
+        auto expected = "[\x02\x02;#;#;\x02\x08]";
         REQUIRE(yson == expected);
     }
 
