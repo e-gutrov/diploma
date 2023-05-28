@@ -5,6 +5,7 @@
 #include "validators_jsoncons.h"
 #include "yson_cursor_validator.h"
 #include "yson_validators_llvm.h"
+#include "yt_yson_validator.h"
 
 #include <Catch2/extras/catch_amalgamated.hpp>
 #include <jsoncons/json.hpp>
@@ -121,6 +122,22 @@ void testYsonLlvmValidation(
     }
 }
 
+void testYtYsonValidators(const std::vector<std::pair<std::string, bool>>& tests,
+                          const TypeBasePtr& type) {
+    auto ytType = YtLogicalTypeFromTableSchema(type);
+    for (const auto& [json, expected] : tests) {
+        auto yson = ConvertJsonToYson(json);
+        INFO("YSON is: " << yson);
+        auto validationResult = true;
+        try {
+            NYT::NTableClient::ValidateComplexLogicalType(yson, ytType);
+        } catch (const std::exception& e) {
+            validationResult = false;
+        }
+        CHECK(validationResult == expected);
+    }
+}
+
 // TODO: move to another file
 
 TEST_CASE("Test JSON to YSON text conversion") {
@@ -206,6 +223,10 @@ TEST_CASE("Test int") {
     SECTION("Test YSON LLVM validation") {
         testYsonLlvmValidation(tests, type);
     }
+
+    SECTION("Test YT YSON validation") {
+        testYtYsonValidators(tests, type);
+    }
 }
 
 TEST_CASE("Test optional int") {
@@ -256,6 +277,10 @@ TEST_CASE("Test optional int") {
 
     SECTION("Test YSON LLVM validation") {
         testYsonLlvmValidation(tests, type);
+    }
+
+    SECTION("Test YT YSON validation") {
+        testYtYsonValidators(tests, type);
     }
 }
 
@@ -309,6 +334,10 @@ TEST_CASE("Test list") {
 
     SECTION("Test YSON LLVM validation") {
         testYsonLlvmValidation(tests, type);
+    }
+
+    SECTION("Test YT YSON validation") {
+        testYtYsonValidators(tests, type);
     }
 }
 
@@ -378,6 +407,10 @@ TEST_CASE("Test object with optional string and required int fields") {
     SECTION("Test YSON LLVM validation") {
         //        testYsonLlvmValidation(tests, type);
     }
+
+    SECTION("Test YT YSON validation") {
+//        testYtYsonValidators(tests, type);
+    }
 }
 
 TEST_CASE("Test list of optional ints") {
@@ -431,6 +464,10 @@ TEST_CASE("Test list of optional ints") {
 
     SECTION("Test YSON LLVM validation") {
         testYsonLlvmValidation(tests, type);
+    }
+
+    SECTION("Test YT YSON validation") {
+        testYtYsonValidators(tests, type);
     }
 }
 
@@ -489,6 +526,10 @@ TEST_CASE("Test tuple of string, int, and list of optional strings") {
 
     SECTION("Test YSON LLVM validation") {
         testYsonLlvmValidation(tests, type);
+    }
+
+    SECTION("Test YT YSON validation") {
+        testYtYsonValidators(tests, type);
     }
 }
 

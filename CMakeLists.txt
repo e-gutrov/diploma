@@ -28,6 +28,7 @@ add_executable(tests
     jsoncons_cursor_validator.cpp
     yson_cursor_validator.cpp
     yson_validators_llvm.cpp
+    yt_yson_validator.cpp
     ${PROJECT_SOURCE_DIR}/include/Catch2/extras/catch_amalgamated.cpp
 )
 target_compile_options(tests PRIVATE
@@ -37,6 +38,7 @@ find_package(Python3 3.7 EXACT COMPONENTS Interpreter)
 target_link_libraries(tests PUBLIC
     library-cpp-yson
     yt-yt-core
+    yt-yt-client
     llvm16-lib-IR
     llvm16-lib-AsmParser
     llvm16-lib-CodeGen
