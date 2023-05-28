@@ -20,16 +20,19 @@
 
 const int BATCH_SIZE = 100'000;
 
+auto bench = ankerl::nanobench::Bench().minEpochIterations(50);
+
 void benchJsonconsValidation(
     const std::string& schemaName,
-    const std::string& data,
+    const std::vector<std::string>& data,
     const jsoncons::json& jsonSchema) {
     auto schema = jsoncons::jsonschema::make_schema(jsonSchema);
     jsoncons::jsonschema::json_validator<jsoncons::json> validator(schema);
     int res = 0;
-    auto jsonObj = jsoncons::json::parse(data);
-    ankerl::nanobench::Bench().run("jsoncons " + schemaName, [&]() {
-        res += validator.is_valid(jsonObj);
+    bench.run("jsoncons/" + schemaName, [&]() {
+        for (const auto& s : data) {
+            res += validator.is_valid(jsoncons::json::parse(s));
+        }
     });
     if (res == 0) {
         assert(0);
@@ -38,14 +41,16 @@ void benchJsonconsValidation(
 
 void benchJsonconsCursorValidation(
     const std::string& schemaName,
-    const std::string& data,
+    const std::vector<std::string>& data,
     const TypeBasePtr& type) {
     auto validator = CreateJsonconsCursorValidator(type);
     int res = 0;
-    ankerl::nanobench::Bench().minEpochIterations(40000).epochs(10).run(
-        "poly jsoncons " + schemaName, [&]() {
-            jsoncons::json_cursor cursor(data);
-            res += validator->Validate(&cursor);
+    bench.run(
+        "JSON poly/" + schemaName, [&]() {
+            for (const auto& s : data) {
+                jsoncons::json_cursor cursor(s);
+                res += validator->Validate(&cursor);
+            }
         });
     if (res == 0) {
         assert(0);
@@ -54,22 +59,24 @@ void benchJsonconsCursorValidation(
 
 void benchRapidJsonValidation(
     const std::string& schemaName,
-    const std::string& data,
+    const std::vector<std::string>& data,
     const std::string& schemaStr) {
     rapidjson::Document d;
     d.Parse(schemaStr.c_str());
     rapidjson::SchemaDocument sd(d);
     int res = 0;
     rapidjson::SchemaValidator validator(sd);
-    ankerl::nanobench::Bench().run("RapidJSON " + schemaName, [&]() {
-        rapidjson::Reader reader;
-        rapidjson::MemoryStream is(data.c_str(), data.size());
-        if (!reader.Parse(is, validator) &&
-            reader.GetParseErrorCode() != rapidjson::kParseErrorTermination) {
-            throw std::exception();
+    bench.run("RapidJSON/" + schemaName, [&]() {
+        for (const auto& s : data) {
+            rapidjson::Reader reader;
+            rapidjson::MemoryStream is(s.c_str(), s.size());
+            if (!reader.Parse(is, validator) &&
+                reader.GetParseErrorCode() != rapidjson::kParseErrorTermination) {
+                throw std::exception();
+            }
+            res += validator.IsValid();
+            validator.Reset();
         }
-        res += validator.IsValid();
-        validator.Reset();
     });
     if (res == 0) {
         assert(0);
@@ -78,7 +85,7 @@ void benchRapidJsonValidation(
 
 void benchJsonLlvmValidation(
     const std::string& schemaName,
-    const std::string& data,
+    const std::vector<std::string>& data,
     const TypeBasePtr& type) {
     auto jit = PrepareJit(PrepareJitFor::Json, false);
     if (auto err = jit->addIRModule(
@@ -91,10 +98,12 @@ void benchJsonLlvmValidation(
     } else {
         int res = 0;
         auto func = reinterpret_cast<bool (*)(void*)>(sym.get().getValue());
-        ankerl::nanobench::Bench().minEpochIterations(40000).epochs(10).run(
-            "JSON LLVM " + schemaName, [&]() {
-                jsoncons::json_cursor cursor(data);
-                res += func(&cursor);
+        bench.run(
+            "JSON LLVM/" + schemaName, [&]() {
+                for (const auto& s : data) {
+                    jsoncons::json_cursor cursor(s);
+                    res += func(&cursor);
+                }
             });
         if (res == 0) {
             assert(0);
@@ -109,7 +118,7 @@ void benchYsonValidation(
     const std::string& format) {
     auto validator = YsonValidators::CreatePolymorphicValidator(type);
     int res = 0;
-    ankerl::nanobench::Bench().run("YSON polymorphic " + schemaName, [&]() {
+    bench.run("YSON poly/" + schemaName, [&]() {
         for (const auto& row : data) {
             TMemoryInput memoryInput(row);
             NYT::NYson::TYsonPullParser parser(
@@ -139,7 +148,7 @@ void benchYsonLlvmValidation(
     } else {
         auto func = reinterpret_cast<bool (*)(void*)>(sym.get().getValue());
         int res = 0;
-        ankerl::nanobench::Bench().run("YSON LLVM " + schemaName, [&]() {
+        bench.run("YSON LLVM/" + schemaName, [&]() {
             for (const auto& row : data) {
                 TMemoryInput memoryInput(row);
                 NYT::NYson::TYsonPullParser parser(
@@ -161,12 +170,11 @@ void runAllBenchmarks(
     auto jsonSchema = GenerateJsonSchema(schema);
 
     for (const auto& [name, data] : inputs) {
-        auto caseName = schemaName + ";" + name;
-        //        benchJsonconsValidation(caseName, data, jsonSchema);
-        //        benchJsonconsCursorValidation(caseName, data, schema);
-        //        benchRapidJsonValidation(caseName, data,
-        //        jsonSchema.to_string()); benchJsonLlvmValidation(caseName,
-        //        data, schema);
+        auto caseName = schemaName + "/" + name;
+        benchJsonconsValidation(caseName, data, jsonSchema);
+        benchRapidJsonValidation(caseName, data, jsonSchema.to_string());
+        benchJsonconsCursorValidation(caseName, data, schema);
+        benchJsonLlvmValidation(caseName, data, schema);
         std::vector<std::string> ysonBinaryData;
         for (const auto& json : data) {
             ysonBinaryData.emplace_back(
@@ -322,18 +330,19 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    ankerl::nanobench::Bench().run("SomeFunc", [&]() {
-        ankerl::nanobench::doNotOptimizeAway(SomeFunc(5));
-    });
+//    bench.run("SomeFunc", [&]() {
+//        ankerl::nanobench::doNotOptimizeAway(SomeFunc(5));
+//    });
 
     benchListOfInts(40);
-//    benchListOfOptionalInts(40);
-//    benchListOfStrings(40);
-//    benchListOfOptionalStrings(40);
-//
-//    benchListOf5xOptionalInts(40);
+    benchListOfOptionalInts(40);
+    benchListOfStrings(40);
+    benchListOfOptionalStrings(40);
+
+    benchListOf5xOptionalInts(40);
 //    benchListOfListOfOptionalListOfInts(40);
-//    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40);
-//    benchListOfTuples2();
+    benchListOfTuplesOfStringIntAndOptionalListOfOptionalStrings(40);
+    benchListOfTuples2();
+    bench.render(ankerl::nanobench::templates::csv(), std::cerr);
     return 0;
 }
